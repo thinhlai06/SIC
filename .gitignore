@@ -35,3 +35,6 @@ __pycache__/
 *.npy
 *.npz
 data/
+
+# Hugging Face token
+hf_token.txt

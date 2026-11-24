@@ -11,14 +11,22 @@
 - File nhãn: `trainLabels.csv` (và file nhãn tập test).
 - Nhãn 5 mức 0–4.
 - Kích thước ảnh rất không đồng đều (từ vài trăm đến khoảng 4000 px). Dung lượng gốc khoảng 89 GiB.
-- Split dùng trong đề tài: **train 35.126 / val 10.906 / test 42.670**. ⚠ Tôi nhớ 10.906 + 42.670 = 53.576 chính là tập test gốc của cuộc thi, chia theo Public/Private leaderboard; sẽ xác nhận trong file nhãn.
+- Split dùng trong đề tài: **train 35.126 / val 10.906 / test 42.670**. ✅ **Đã xác minh (GĐ0):** 10.906 + 42.670 = 53.576 là tập test gốc của cuộc thi; file `testLabels15.csv` có cột `Usage`: **Public = 10.906 (dùng làm val)**, **Private = 42.670 (dùng làm test)**. Cuộc thi trên Kaggle chỉ có `trainLabels.csv`, nhãn test lấy từ bản resize của `benjaminwarner/resized-2015-2019-blindness-detection-images`.
 
-**Phân bố lớp (tập train, xấp xỉ ⚠):** mức 0 ≈ 73%, mức 1 ≈ 7%, mức 2 ≈ 15%, mức 3 ≈ 2,5%, mức 4 ≈ 2%. Mất cân bằng nặng.
+**Phân bố lớp (✅ đã xác minh từ file nhãn):**
+
+| Tập | Tổng | Mức 0 | Mức 1 | Mức 2 | Mức 3 | Mức 4 |
+|---|---|---|---|---|---|---|
+| Train | 35.126 | 25.810 (73,5%) | 2.443 | 5.292 | 873 | 708 |
+| Val (Public) | 10.906 | 8.130 | 720 | 1.579 | 237 | 240 |
+| Test (Private) | 42.670 | 31.403 | 3.042 | 6.282 | 977 | 966 |
+
+Mất cân bằng nặng (lớp 0 chiếm khoảng 73–74% ở mọi tập).
 
 **Điểm yếu (phải nêu trong báo cáo):**
 - Nhãn nhiễu (một người chấm mỗi ảnh); nhiều ảnh không chấm được lại bị gán mức 0.
 - Mất cân bằng lớp.
-- ⚠ Rủi ro rò rỉ bệnh nhân: nếu val và test cắt theo ảnh mà không theo bệnh nhân thì mắt trái/phải cùng một người có thể nằm ở cả hai. Sẽ kiểm tra bằng id trong probe; chọn checkpoint theo val chỉ có hại nhẹ, nhưng cần ghi nhận.
+- ✅ **Không rò rỉ bệnh nhân (đã kiểm tra theo id):** train có 17.563 bệnh nhân, test 26.788; **0 bệnh nhân trùng** giữa train và test, và **0 bệnh nhân trùng** giữa Public (val) và Private (test). Mắt trái/phải của cùng một người luôn nằm cùng một tập.
 
 **Vì sao chọn EyePACS làm miền nguồn (train):**
 1. **Lớn nhất** (35k ảnh có nhãn): đủ để fine-tune mô hình 300 triệu tham số mà không quá khớp.
@@ -34,7 +42,9 @@
 - Nhãn mức bệnh **6 lớp**: 0–4 và lớp 5 "ungradable" (ảnh chất lượng kém, không chấm được).
 - Có thêm nhãn mức pixel và bounding box cho vi phình mạch, xuất huyết, xuất tiết cứng/mềm (đề tài **không dùng** phần này).
 - Split chính thức: train 6.835 / val 2.733 / test 4.105. Bỏ lớp ungradable (thông lệ): 6.320 / 2.503 / **3.759**.
-- Mức 3 rất hiếm trong DDR (⚠ vài trăm ảnh toàn bộ bộ, chỉ khoảng một trăm trong test) → recall/F1 của mức 3 sẽ **dao động mạnh**, cần bootstrap CI.
+- ✅ **Đã xác minh từ `DR_grading/test.txt` (4.105 dòng):** mức 0 = 1.880, mức 1 = 189, mức 2 = 1.344, **mức 3 = 71**, mức 4 = 275, ungradable (5) = 346. Bỏ lớp 5 còn **3.759** ảnh. Mức 3 chỉ có **71 ảnh** → recall/F1 của mức 3 sẽ **dao động mạnh**, bắt buộc báo cáo bootstrap CI.
+- So với EyePACS (mức 0 khoảng 74%): DDR-test có mức 0 khoảng 50% và mức 2 khoảng 36% → **label shift** rõ rệt, nên Accuracy giữa hai bộ không so sánh trực tiếp được.
+- Nguồn dùng: Kaggle `samriddhibagchi/ddr-dataset-credits-to-authors` (giữ cấu trúc gốc, giấy phép MIT).
 
 **Vì sao chọn DDR làm miền đích (test):**
 1. **Khác EyePACS thật sự**: dân số Trung Quốc vs Mỹ, máy/bệnh viện khác, người chấm khác, tỉ lệ mức bệnh khác → đúng loại domain shift đề tài muốn đo.
