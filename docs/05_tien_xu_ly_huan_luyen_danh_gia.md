@@ -108,3 +108,68 @@ Nếu đo thực tế chậm hơn: giảm epoch, giảm seed của B2 xuống 1,
 - Kết luận chỉ áp dụng cho cặp EyePACS → DDR.
 
 **Danh sách hình đầu ra** (lưu vào `evidence_figures/`): xem `evidence_figures/README.md`.
+
+---
+
+## 4. Giải thích dễ hiểu: QWK, B1/B2/M1/M2, và thế nào là "tốt"
+
+### 4.1 QWK là gì, đo cái gì?
+
+**QWK (Quadratic Weighted Kappa)** đo mức độ **đồng thuận giữa mô hình và bác sĩ** khi chấm các mức bệnh **có thứ tự** (0 → 4), có tính đến **khoảng cách** của lỗi.
+
+- **Hình dung:** chấm điểm một bài thi. Máy chấm 3, bác sĩ chấm 2: lệch ít, bị phạt nhẹ. Máy chấm 0, bác sĩ chấm 4: lệch rất xa, bị phạt rất nặng. Phạt tăng theo **bình phương** khoảng cách (nhầm xa 2 mức bị phạt gấp 4 lần nhầm xa 1 mức).
+- **Thang đo:** **1** = trùng khít bác sĩ; **0** = không hơn gì đoán ngẫu nhiên; **âm** = tệ hơn đoán ngẫu nhiên.
+- **Điểm mạnh:** đã trừ phần "trùng hợp do may rủi", nên không bị lớp đông (mức 0) làm đẹp số.
+- **Cách đọc tham khảo** (thang Landis-Koch, dùng cho kappa nói chung): 0,61–0,80 khá tốt; 0,81–1,00 gần như hoàn hảo. Đây chỉ là mốc tham khảo, **không phải ngưỡng đạt/không đạt**.
+
+### 4.2 B1, B2, M1, M2 là gì?
+
+**B = Baseline** (mốc đối chứng). **M = Main** (mô hình của đề tài). Cả bốn đều huấn luyện trên **cùng dữ liệu EyePACS** với cùng quy trình, chỉ khác "bộ não khởi đầu".
+
+| Mã | Mô hình | Hình dung dễ hiểu |
+|---|---|---|
+| **B1** | ResNet-50, học trước trên ảnh thường (ImageNet) | Người giỏi nhận đồ vật nói chung, chưa từng thấy võng mạc, học chấm bệnh gần như từ đầu |
+| **B2** | ViT-L, học trước trên ảnh thường bằng MAE | Cùng loại "bộ não" với RETFound nhưng chưa từng thấy võng mạc |
+| **M1** | **RETFound**, đã học trước trên hàng trăm nghìn ảnh võng mạc | Đã "xem" rất nhiều võng mạc trước khi học chấm bệnh |
+| **M2** | M1 cộng augmentation mô phỏng máy chụp khác (đổi màu, độ sáng, làm mờ, nhiễu) | Như M1 nhưng được luyện chịu được ảnh từ nhiều kiểu máy |
+
+Mỗi cặp so sánh trả lời **một câu hỏi**:
+- **B2 so với M1:** học trước trên *ảnh võng mạc* có thực sự giúp, hay chỉ do kiến trúc ViT-L?
+- **M1 so với M2:** augmentation mô phỏng domain shift có giúp thêm không?
+- **B1 so với M1:** mô hình thông thường so với mô hình của đề tài.
+
+### 4.3 Làm sao biết mô hình đang "tốt lên" trong lúc huấn luyện?
+
+Sau mỗi epoch ta tính và vẽ biểu đồ trên **EyePACS-val** (không bao giờ nhìn DDR):
+
+| Dấu hiệu | Ý nghĩa | Việc làm |
+|---|---|---|
+| Train loss giảm **và** val QWK tăng | Đang học thật, tốt lên | Tiếp tục |
+| Train loss vẫn giảm nhưng val QWK **đứng yên hoặc giảm** | **Overfitting** (học thuộc dữ liệu train, không tổng quát) | Dừng, lấy checkpoint có val QWK cao nhất |
+| Train loss **không giảm** | Cấu hình có vấn đề (tốc độ học quá lớn/nhỏ, lỗi dữ liệu) | Kiểm tra lại, chỉnh |
+| Val QWK **dao động mạnh** | Chưa ổn định | Giảm tốc độ học, chạy thêm seed |
+
+Checkpoint tốt nhất được chọn theo **QWK cao nhất trên EyePACS-val**. Biểu đồ loss/QWK theo epoch là minh chứng, lưu ở `evidence_figures/03_training/`.
+
+### 4.4 Tiêu chí "tốt" và vì sao dùng chúng
+
+"Tốt" **không có một con số tuyệt đối**; nó là so sánh có kiểm soát theo các tiêu chí sau:
+
+| Tiêu chí | Trả lời câu hỏi | Vì sao dùng |
+|---|---|---|
+| **QWK** (chính) | Chấm mức bệnh gần bác sĩ đến đâu? | Hợp với nhãn có thứ tự; đã hiệu chỉnh theo may rủi; là chuẩn của cộng đồng DR |
+| **Macro-F1** | Có làm tốt **đều** ở mọi mức, kể cả mức hiếm? | Trung bình các lớp ngang nhau, không để lớp đông át |
+| **Recall từng lớp** | Bắt được bao nhiêu ca bệnh **thật** ở từng mức? | Bỏ sót ca nặng nguy hiểm hơn báo nhầm |
+| **AUC "referable" (mức ≥ 2)** | Có phân biệt được ca cần chuyển khám không? | Gần với ca dùng thực tế (sàng lọc) |
+| **Accuracy** (phụ) | Tỉ lệ đoán đúng | Dễ hiểu, nhưng **dễ đánh lừa** (xem ví dụ dưới) |
+| **ΔQWK = QWK(EyePACS-test) − QWK(DDR-test)** | Đổi sang miền mới thì tụt bao nhiêu? | **Đo trực tiếp độ bền vững**, là câu hỏi cốt lõi của đề tài |
+| **Khoảng tin cậy 95% (bootstrap)** | Chênh lệch có thật hay chỉ do ngẫu nhiên? | DDR mức 3 chỉ có 71 ảnh nên số rất dao động |
+
+**Ví dụ vì sao Accuracy đánh lừa:** một "mô hình ngốc" luôn đoán *"không bệnh"* sẽ đạt Accuracy khoảng **73,6%** trên EyePACS-test (31.403/42.670 ca là mức 0), nhưng **QWK = 0** và Macro-F1 chỉ khoảng **0,17**, tức không bắt được ca bệnh nào. Trên DDR-test, mô hình đó đạt Accuracy khoảng 50,0% (1.880/3.759). Hai con số Accuracy khác nhau chỉ vì tỉ lệ lớp khác nhau (label shift), không liên quan chất lượng mô hình.
+
+**Đề tài coi mô hình là "tốt" khi (cả ba ý):**
+1. Trên **DDR**, M1 (hoặc M2) có QWK **cao hơn** B1 và B2, và khoảng tin cậy không chồng lấn nhiều.
+2. **ΔQWK nhỏ hơn**, tức mô hình tụt ít hơn khi đổi miền.
+3. Recall các mức nặng (3, 4) **không sụp** (không đạt thì QWK cao cũng chưa đáng tin).
+
+Nếu kết quả không như kỳ vọng (ví dụ M2 không hơn M1), đó **vẫn là kết quả hợp lệ** và được báo cáo trung thực cùng phân tích nguyên nhân.
