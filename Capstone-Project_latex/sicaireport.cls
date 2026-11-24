@@ -290,9 +290,6 @@
       \vspace{4pt}
       {\sffamily\color{SamsungDarkGray}\memberOne}\par
       {\sffamily\color{SamsungDarkGray}\memberTwo}\par
-      {\sffamily\color{SamsungDarkGray}\memberThree}\par
-      {\sffamily\color{SamsungDarkGray}\memberFour}\par
-      {\sffamily\color{SamsungDarkGray}\memberFive}\par
     \end{flushright}
   \end{minipage}
   

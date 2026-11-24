@@ -4,19 +4,101 @@
 \section{Background Information}
 \label{sec:background}
 
-% [TODO: Insert your project's background information here]
-% Provide the domain context, problem area, and foundational technologies relevant to the project.
+\subsection{Diabetic Retinopathy and Fundus Photography}
+\label{subsec:dr_fundus}
+
+Diabetic retinopathy (DR) is a complication of diabetes that damages the small blood vessels of the retina and, if it is detected late, can lead to irreversible vision loss. It is one of the leading causes of preventable blindness in working-age adults, and its early stages are usually symptom-free. Screening programmes therefore rely on \emph{fundus photography}: a specialised camera photographs the back of the eye, and a trained grader inspects the image for lesions such as microaneurysms, haemorrhages and exudates.
+
+The severity of DR is reported on the five-level International Clinical Diabetic Retinopathy (ICDR) scale \cite{icdr2003}: grade~0 (no DR), 1 (mild), 2 (moderate), 3 (severe) and 4 (proliferative DR). Grades are \emph{ordinal}: confusing grade~0 with grade~4 is a far more serious error than confusing grade~2 with grade~3. Grade~2 or higher is commonly called \emph{referable} DR, because the patient should be sent to an ophthalmologist. Table~\ref{tab:icdr} summarises the scale as used in this project.
+
+\begin{table}[htbp]
+    \centering
+    \caption{ICDR severity scale used as the five classes of this project.}
+    \label{tab:icdr}
+    \begin{tabularx}{\textwidth}{c l X}
+        \toprule
+        \textbf{Grade} & \textbf{Name} & \textbf{Clinical meaning (simplified)} \\
+        \midrule
+        0 & No DR            & No visible signs of diabetic retinopathy \\
+        1 & Mild             & Microaneurysms only \\
+        2 & Moderate         & More than microaneurysms, but less than severe; \emph{referable} from here on \\
+        3 & Severe           & Extensive haemorrhages or vascular abnormalities in the retina \\
+        4 & Proliferative    & New abnormal vessels or vitreous/pre-retinal haemorrhage; sight-threatening \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Automated DR Grading with Deep Learning}
+\label{subsec:dl_grading}
+
+Because screening produces far more images than specialists can read, automated grading has been studied intensively. A landmark study showed that a convolutional neural network trained on tens of thousands of graded photographs could detect referable DR with sensitivity and specificity comparable to ophthalmologists \cite{gulshan2016}. The public Kaggle \emph{Diabetic Retinopathy Detection} competition \cite{kagglecomp2015}, built on images from the EyePACS screening platform \cite{eyepacs2009}, made a large labelled fundus collection available and became the de-facto benchmark of the field.
+
+\subsection{The Domain-Shift Problem}
+\label{subsec:domain_shift_bg}
+
+A model that is accurate on the hospital whose images it was trained on is not necessarily accurate in another hospital. Cameras differ in colour rendition, field of view, resolution and noise; patient populations differ in the proportion of each DR grade; and graders apply the ICDR scale with different consistency. This mismatch between the training distribution and the deployment distribution is called \emph{domain shift}. We distinguish three components:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Covariate shift}: the images look different (colour, brightness, framing, black borders, resolution).
+    \item \textbf{Label (prior) shift}: the proportion of each grade differs. In this project, about 74\% of EyePACS test images are grade~0, whereas only 50\% of the DDR test images are (Chapter~\ref{chap:results}).
+    \item \textbf{Annotation shift}: the grading protocol and the number of graders differ.
+\end{itemize}
+
+A model can also learn \emph{shortcuts}, such as recognising the camera model rather than the lesion, which then fail when the camera changes. The field of \emph{domain generalization} (DG) studies how to train on one or several source domains so that the model works on unseen target domains, without using any target data during training \cite{dgsurvey2023}.
+
+\subsection{Self-Supervised Learning and Retinal Foundation Models}
+\label{subsec:ssl_bg}
+
+Labelled fundus images are expensive, but unlabelled ones are abundant. \emph{Self-supervised learning} (SSL) invents a task that needs no human label, so that a network can learn useful image representations from raw data. In the masked autoencoder (MAE) approach \cite{mae2022}, a large fraction of image patches is hidden and the network must reconstruct them, which forces it to learn the structure of the image. RETFound \cite{retfound2023} applied this idea to retinal images and released a Vision Transformer \cite{vit2021} pre-trained on hundreds of thousands of unlabelled fundus photographs. Its authors report that fine-tuning this model needs fewer labels than conventional pre-training. Whether such a retina-specific SSL model also keeps its accuracy when the \emph{imaging domain changes} is the question this project examines.
 
 \section{Motivation and Objective}
 \label{sec:motivation_objective}
 
-% [TODO: Insert motivation and objective here]
-% Describe the primary driving factors for this project and specific, measurable objectives.
+\subsection{Motivation}
+\label{subsec:motivation}
+
+A DR grading tool is only useful if it works on the images of the clinic that deploys it, which usually differ from the clinic that produced the training data. Reporting accuracy on a held-out part of the training dataset hides this problem. Two ideas promise robustness: (i) representations learned by SSL on large and varied unlabelled retinal collections, and (ii) augmentation that imitates the differences between cameras and sites, as in the FundusAug module of GDRNet \cite{gdrnet2023}. Both are attractive, but their benefit in a strictly controlled \emph{train-on-one-dataset, test-on-another} protocol has to be measured and not assumed.
+
+\subsection{Research Question and Hypotheses}
+\label{subsec:research_question}
+
+The research question of the project is:
+
+\begin{quote}
+\emph{Do self-supervised pre-training on retinal images (RETFound) and domain-shift augmentation help a DR grading model keep its performance when it is trained on EyePACS and tested on the unseen DDR dataset, and by how much?}
+\end{quote}
+
+We formulate three hypotheses, each of which is testable with the controlled comparison of Section~\ref{sec:training_methodology}:
+
+\begin{enumerate}[leftmargin=1.8em]
+    \item[H1.] A ViT-L initialised with retina-specific SSL weights (M1) reaches a higher QWK on DDR than the same architecture initialised with ImageNet MAE weights (B2).
+    \item[H2.] The drop in performance from in-domain (EyePACS-test) to out-of-domain (DDR-test) is smaller for M1 than for the conventional ResNet-50 baseline (B1).
+    \item[H3.] Adding domain-shift augmentation (M2) reduces this drop further compared with M1.
+\end{enumerate}
+
+A negative outcome for any hypothesis is a legitimate result and is reported as such.
+
+\subsection{Objectives}
+\label{subsec:objectives}
+
+The measurable objectives are:
+
+\begin{enumerate}[leftmargin=1.8em]
+    \item Build a reproducible pipeline that trains only on EyePACS and evaluates on EyePACS-test (in-domain) and DDR-test (out-of-domain), with every choice (checkpoint, hyper-parameters, augmentation strength) made on EyePACS-validation only.
+    \item Train and compare four models: B1 (ResNet-50, ImageNet), B2 (ViT-L, ImageNet MAE), M1 (RETFound) and M2 (RETFound with domain-shift augmentation), using three random seeds where the GPU budget allows.
+    \item Report quadratic weighted kappa (primary), macro-F1, per-grade recall, referable-DR AUC and the in-to-out drop $\Delta$QWK, each with bootstrap 95\% confidence intervals.
+    \item Explain the results with Grad-CAM and t-SNE, and deliver a local web demo for grading a single fundus image.
+\end{enumerate}
+
+\subsection{Scope and Constraints}
+\label{subsec:scope}
+
+The project deliberately uses \emph{only two datasets}: EyePACS as the source domain and the DDR test split as the target domain. The SSL stage itself is not repeated by the team; the RETFound weights released by its authors are used and the team's contribution is the controlled comparison and the robustness analysis. Domain generalization is limited to data augmentation, because only one labelled source domain is available. All training runs on free Kaggle GPUs (NVIDIA T4) within a budget of about 30 GPU hours, which is why the input resolution is fixed at $224\times224$ pixels.
 
 \section{Members and Role Assignments}
 \label{sec:members_roles}
 
-% [TODO: Specify team members and detailed task/role assignments]
+The team ("Group~3") has two members. Both members take part in writing the report and in reviewing each other's work; the technical responsibilities are divided as follows.
 
 \begin{table}[htbp]
     \centering
@@ -26,11 +108,8 @@
         \toprule
         \textbf{No.} & \textbf{Member Name} & \textbf{Assigned Roles and Responsibilities} \\
         \midrule
-        1 & \memberOne   & Project Leader, System Architecture \\
-        2 & \memberTwo   & Deep Learning Model Design and Training \\
-        3 & \memberThree & Data Preprocessing and Feature Engineering \\
-        4 & \memberFour  & Evaluation, Testing, and Optimization \\
-        5 & \memberFive  & User Interface and Application Deployment \\
+        1 & \memberOne   & Model design and training: baselines B1/B2, RETFound fine-tuning (M1), domain-shift augmentation (M2), training scripts and GPU-budget planning on Kaggle, Grad-CAM and t-SNE analysis \\
+        2 & \memberTwo   & Data and evaluation: dataset acquisition and verification, preprocessing, exploratory data analysis, metrics and bootstrap confidence intervals, testing, and the Gradio web demo \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -38,7 +117,8 @@
 \section{Schedule and Milestones}
 \label{sec:schedule_milestones}
 
-% [TODO: Outline project schedule, timeline, and key milestones]
+Table~\ref{tab:milestones} follows the ten-week programme schedule. The status column reflects the state of the work at the time of this draft.
+% [PENDING: update the Status column of Table 1.3 when the final version is produced]
 
 \begin{table}[htbp]
     \centering
@@ -48,10 +128,10 @@
         \toprule
         \textbf{Phase} & \textbf{Timeline} & \textbf{Key Deliverables / Activities} & \textbf{Status} \\
         \midrule
-        1 & Weeks 1--2 & Topic selection, requirement analysis, and dataset acquisition & Completed \\
-        2 & Weeks 3--4 & Exploratory Data Analysis (EDA) and data preprocessing & Completed \\
-        3 & Weeks 5--7 & Model architecture design, baseline setup, and training & Completed \\
-        4 & Weeks 8--9 & UI integration, testing, evaluation, and system optimization & In Progress \\
+        1 & Weeks 1--2 & Topic selection, requirement analysis, and dataset acquisition (EyePACS, DDR, RETFound weights) & Completed \\
+        2 & Weeks 3--4 & Exploratory Data Analysis (EDA) and data preprocessing (cropping, resizing, duplicate check) & In Progress \\
+        3 & Weeks 5--7 & Model architecture design, baseline setup (B1, B2), and training of M1/M2 on Kaggle GPUs & Pending \\
+        4 & Weeks 8--9 & Evaluation on EyePACS-test and DDR-test, Grad-CAM/t-SNE analysis, UI integration, testing, and system optimization & Pending \\
         5 & Week 10    & Final report submission and capstone presentation & Pending \\
         \bottomrule
     \end{tabularx}

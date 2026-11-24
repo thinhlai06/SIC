@@ -4,80 +4,130 @@
 \section{Data Preprocessing}
 \label{sec:data_preprocessing}
 
-% [TODO: Detail data cleaning, missing value imputation, normalization, tokenization, augmentation, etc.]
+\subsection{Goals and Design Principles}
+\label{subsec:prep_goals}
+
+The preprocessing has two goals: to give every model a compact $224\times224$ input (the resolution of the pre-trained Vision Transformers), and to remove differences between the datasets that have nothing to do with the retina, such as the width of the black border. Three principles guided the design. First, \emph{one pipeline for all}: the same steps and the same constants are applied to every image of every dataset and every model. Second, \emph{no target information}: all constants were fixed before looking at DDR results, and no DDR statistic is used to adjust the preprocessing of EyePACS. Third, \emph{no hidden domain adaptation}: we deliberately do not apply colour normalisation such as Ben Graham's local-average subtraction, because it is itself a domain-normalisation method that would blur the effect we want to measure and would differ from the distribution on which RETFound was pre-trained.
+
+\subsection{Pipeline}
+\label{subsec:prep_pipeline}
+
+For each image the following steps are performed (executed on Kaggle CPU kernels):
+
+\begin{enumerate}[leftmargin=1.8em]
+    \item \textbf{Label handling.} DDR images with the ``ungradable'' label are removed (346 images), leaving 3{,}759 test images.
+    \item \textbf{Retina cropping.} The image is shrunk so that its longer side is 512 pixels, a pixel is considered background if all colour channels are $\le 15$ (out of 255), a row or column belongs to the retina if at least 1\% of its pixels are foreground, and the bounding box of those rows and columns, enlarged by a 2\% margin, is cropped from the full-resolution image. If no foreground is found, the whole image is kept (``fallback'').
+    \item \textbf{Square padding.} The crop is padded with black to a square without distorting the aspect ratio, so that the optic disc and the macula keep their shape.
+    \item \textbf{Resizing.} The square image is resized to $224\times224$ with Lanczos interpolation.
+    \item \textbf{Cache.} The result is stored as a JPEG of quality 95 without chroma subsampling, so that all later experiments read small files instead of the original images (about 89\,GB for EyePACS).
+    \item \textbf{Normalisation at load time.} Pixel values are scaled to $[0,1]$ and normalised with the ImageNet mean and standard deviation, as in the official RETFound fine-tuning code.
+    \item \textbf{Duplicate check.} A 64-bit difference hash (dHash) of every $224\times224$ image is computed, and every DDR test image is compared with all EyePACS images by Hamming distance to detect near-duplicates that would leak between the source and target domains.
+\end{enumerate}
+
+The cropping step matters because of the framing gap documented in Section~\ref{subsec:eda_domain_gap}: in DDR the retina occupies only about half of the image area, so without cropping the DDR retina would be much smaller than the EyePACS retina after resizing.
+
+\subsection{Quality Checks}
+\label{subsec:prep_qa}
+
+A packaging step verifies the cache: that every image listed in the manifest exists, that the image size is $224\times224$ (checked on a sample of about 300 images per split), and that no image failed to open; the number of images for which the cropping fell back to the whole image is also reported.
+% [PENDING: insert the results of the QA report (logs/qa_report.json): number of missing files, size check, number of fallback images, processing time]
+% [PENDING: insert Figure p01_before_after_crop.png (before/after cropping, EyePACS and DDR) with a description paragraph]
+% [PENDING: insert the dHash duplicate-check result (p02_phash_check): number of DDR images with an EyePACS near-duplicate at Hamming distance <= threshold, and the example figure]
+
+\subsection{Augmentation During Training}
+\label{subsec:prep_aug}
+
+Augmentation is applied only to the training images, on the fly, after the cache is read. The standard and the domain-shift variants are described in Section~\ref{subsec:dg_aug}; the validation and test images only receive the normalisation of step~6.
 
 \section{Exploratory Data Analysis (EDA)}
 \label{sec:eda}
 
-% [TODO: Insert data visualization, distributions, correlation matrices, and analytical findings]
+\subsection{Class Distributions and Label Shift}
+\label{subsec:eda_labels}
+
+Figure~\ref{fig:class_eyepacs} shows the grade distribution of the three EyePACS parts, and Figure~\ref{fig:class_ddr} that of DDR-test. The three EyePACS parts have almost the same proportions: grade~0 is 73.5\% of the training images, 74.5\% of the validation images and 73.6\% of the test images, whereas grade~3 and grade~4 together make up only about 4.5\%. In contrast, DDR-test has only 50.0\% of grade~0 but 35.8\% of grade~2 (EyePACS: about 15\%). The two datasets therefore differ in their label distribution, which is a \emph{label shift} on top of the covariate shift studied later. Two consequences follow: accuracy is not comparable across the datasets, and a model that has learned the EyePACS prior will tend to under-predict disease on DDR. Grade~3 is rare in both (71 images in DDR-test), so its recall will be uncertain.
 
 \begin{figure}[htbp]
     \centering
-    \setlength{\fboxrule}{0.8pt}%
-    \setlength{\fboxsep}{14pt}%
-    \fcolorbox{SamsungGray}{white}{%
-        \parbox{0.85\textwidth}{%
-            \centering\vspace{0.9cm}
-            \sffamily\color{SamsungDarkGray}
-            {\large\bfseries [Exploratory Data Analysis Plots]}\par
-            \vspace{0.3cm}
-            \footnotesize Replace this box with: \texttt{\textbackslash includegraphics[width=0.85\textbackslash textwidth]\{figures/eda\_plots.png\}}\par
-            \vspace{0.9cm}
-        }%
-    }
-    \caption{Exploratory Data Analysis: Feature Distributions and Correlations}
-    \label{fig:eda_results}
+    \includegraphics[width=\textwidth]{figures/d01_class_dist_eyepacs.png}
+    \caption{Number of images per ICDR grade in the three EyePACS parts: training (left), validation = Public part of the test set (middle) and in-domain test = Private part (right). Percentages are shares of the part.}
+    \label{fig:class_eyepacs}
 \end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.62\textwidth]{figures/d02_class_dist_ddr.png}
+    \caption{Number of images per ICDR grade in the DDR test split after removing ungradable images (3{,}759 images).}
+    \label{fig:class_ddr}
+\end{figure}
+
+\subsection{Visual Comparison of the Two Domains}
+\label{subsec:eda_samples}
+
+Figure~\ref{fig:samples} shows randomly chosen images of every grade from EyePACS (top three rows) and from DDR (bottom three rows). Even for a human the origin is often recognisable: EyePACS images are mostly circular and fill the frame, with a variety of hues ranging from pale pink to red or dark green; DDR images are often elliptical with wide black margins and a more orange or yellow colour cast, and a few show strong green or very dark casts. Across both datasets, image quality varies widely, and some images of higher grades are blurred or partly obscured, which also explains part of the label noise of EyePACS.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figures/d03_samples_per_grade.png}
+    \caption{Random samples per ICDR grade (columns 0--4). Top three rows: EyePACS. Bottom three rows: DDR. The two domains differ in framing (circular and tight vs. elliptical with black margins) and in colour.}
+    \label{fig:samples}
+\end{figure}
+
+\subsection{Quantifying the Domain Gap}
+\label{subsec:eda_domain_gap}
+
+To quantify what the eye sees, we measured simple statistics on a random sample of 400 images from each dataset. The retina occupies about 83\% of the image area in the resized EyePACS images but only about 52\% in DDR, which confirms the need to crop. Figure~\ref{fig:color_stats} compares the mean intensity of each colour channel inside the retina. The red channel overlaps strongly, but the green and especially the blue channel of DDR are shifted towards lower values (blue: about 38 for DDR against about 67 for EyePACS), i.e.\ DDR images are on average warmer. This is a first, quantitative argument for including colour augmentation (gain, gamma, jitter) in model M2. Figure~\ref{fig:sizes} shows that the original resolutions also differ greatly: the resized EyePACS images have a longer side of at most 1{,}024 pixels (median about $1024\times946$), whereas DDR images are much larger (median about $2736\times1824$, up to $5184\times3456$). The orientation and exact shape of the retina vary as well.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/d04_color_stats_domain_gap.png}
+    \caption{Histograms of the mean red, green and blue value inside the retina region for 400 random images per dataset. The blue (and, less strongly, green) channel of DDR is clearly shifted towards lower values.}
+    \label{fig:color_stats}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.62\textwidth]{figures/d05_image_sizes.png}
+    \caption{Original image width and height of the sampled images. EyePACS (resized version) is concentrated at a width of about 1{,}024 pixels, while DDR images are larger and more varied.}
+    \label{fig:sizes}
+\end{figure}
+
+\subsection{Findings Relevant to the Experiment}
+\label{subsec:eda_findings}
+
+The EDA leads to four concrete decisions and one limitation:
+\begin{itemize}[leftmargin=1.5em]
+    \item Crop every image to the retina before resizing (framing gap).
+    \item Use class-aware sampling and a robust loss (Section~\ref{subsec:loss}) because of the heavy imbalance of EyePACS.
+    \item Report QWK, macro-F1 and per-grade recall instead of accuracy alone (label shift).
+    \item Include colour and quality augmentation in M2 (colour gap).
+    \item \emph{Limitation:} the colour statistics of DDR were looked at during this EDA, so the \emph{motivation} for colour augmentation is informed by the target domain. To limit the influence, the augmentation ranges are generic and fixed in advance, and no DDR number was used to tune them.
+\end{itemize}
 
 \section{Modeling}
 \label{sec:modeling}
 
-% [TODO: Describe model architectures, baselines, hyperparameters, and quantitative comparative benchmarks]
-
-\begin{table}[htbp]
-    \centering
-    \caption{Model Evaluation and Comparative Performance Benchmarks}
-    \label{tab:model_results}
-    \begin{tabularx}{\textwidth}{p{5.5cm} X X X X}
-        \toprule
-        \textbf{Model Architecture} & \centering\textbf{Accuracy (\%)} & \centering\textbf{Precision (\%)} & \centering\textbf{Recall (\%)} & \centering\arraybackslash\textbf{F1-Score (\%)} \\
-        \midrule
-        Baseline Linear Model       & \centering 82.4 & \centering 81.0 & \centering 80.5 & \centering\arraybackslash 80.7 \\
-        Iterative Architecture A    & \centering 88.6 & \centering 87.9 & \centering 88.2 & \centering\arraybackslash 88.0 \\
-        Proposed Deep Architecture  & \centering\textbf{94.8} & \centering\textbf{94.5} & \centering\textbf{95.1} & \centering\arraybackslash\textbf{94.8} \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
-\begin{equation}
-    \text{F1-Score} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
-    \label{eq:f1_score}
-\end{equation}
+% [PENDING: Section 3.3 is written after the training runs on Kaggle. Planned content, each with its figure and a descriptive paragraph:
+%  3.3.1 Training dynamics (loss/QWK curves per run, all seeds)                -> t01, t02
+%  3.3.2 Main results table: QWK, macro-F1, AUC(referable), accuracy on EyePACS-test and DDR-test for B1, B2, M1, M2 (mean +- std over seeds, bootstrap 95% CI)
+%  3.3.3 In-domain to out-of-domain drop (Delta QWK) and paired bootstrap comparisons -> e04, e05
+%  3.3.4 Per-grade recall and confusion matrices                               -> e01, e03
+%  3.3.5 ROC for referable DR                                                  -> e02
+%  3.3.6 Linear-probe results
+%  3.3.7 Interpretability: Grad-CAM (correct and wrong cases) and t-SNE coloured by dataset -> a01--a04]
+No result number is reported here yet: the models have not been trained at the time of this draft, and the team does not insert placeholder or estimated values.
 
 \section{User Interface}
 \label{sec:user_interface}
 
-% [TODO: Showcase user application interface, web/mobile dashboard screenshots, and user interaction flows]
-
-\begin{figure}[htbp]
-    \centering
-    \setlength{\fboxrule}{0.8pt}%
-    \setlength{\fboxsep}{14pt}%
-    \fcolorbox{SamsungGray}{white}{%
-        \parbox{0.85\textwidth}{%
-            \centering\vspace{0.9cm}
-            \sffamily\color{SamsungDarkGray}
-            {\large\bfseries [Application User Interface Screenshot]}\par
-            \vspace{0.3cm}
-            \footnotesize Replace this box with: \texttt{\textbackslash includegraphics[width=0.85\textbackslash textwidth]\{figures/ui\_screenshot.png\}}\par
-            \vspace{0.9cm}
-        }%
-    }
-    \caption{Interactive User Interface Dashboard}
-    \label{fig:ui_dashboard}
-\end{figure}
+% [PENDING: Section 3.4 is written after the demo application is built (screenshots of upload, prediction with probabilities, Grad-CAM overlay; Figure u01/u02), see Section 2.4.3 for the design]
 
 \section{Testing and Improvements}
 \label{sec:testing_improvements}
 
-% [TODO: Outline testing protocols, edge case analyses, ablation experiments, and iterative improvements made]
+% [PENDING: Section 3.5 is written after the evaluation. Planned content: ablation of the augmentation operations of M2 (1 seed), error analysis, robustness caveats, and the following limitations that are already known:
+%  - only one source and one target domain (conclusions apply to EyePACS -> DDR);
+%  - RETFound's pre-training included about 9.8% EyePACS images (without labels), so in-domain EyePACS-test results may be optimistic, while DDR was not part of it;
+%  - DDR grade 3 has only 71 test images (wide confidence intervals);
+%  - DDR colour statistics informed the motivation of the colour augmentation (Section 3.2.5);
+%  - single-source DG with augmentation only; no domain-invariant feature learning.]

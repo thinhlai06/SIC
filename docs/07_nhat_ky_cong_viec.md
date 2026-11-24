@@ -90,3 +90,27 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 | `apikey_kaggle.txt` chứa cả token Kaggle và Hugging Face | Đã bị git chặn, nhưng nên xem xét đổi token nếu từng chia sẻ file này. Có thể tách token HF sang file riêng `hf_token.txt` (cũng bị chặn). |
 | Công cụ Chrome không kết nối | Đã đi đường vòng bằng token. Nếu sau này cần thao tác web, cần bật extension. |
 | Số liệu ước lượng giờ GPU | Vẫn là ước lượng, chưa đo; sẽ đo ở GĐ3. |
+
+---
+
+## Viết báo cáo đợt 1 (W1) trong lúc chờ kernel đóng gói (2026-11-24)
+
+> Kernel `sic-dr-package` (CPU) chạy từ khoảng 19:07 và đến 21:04 vẫn `RUNNING`; Kaggle không cho xem log khi đang chạy. Trong lúc chờ làm các việc **không phụ thuộc kết quả đóng gói** và **không đụng GPU**.
+
+### W1.1 Xác minh tài liệu tham khảo và viết `references.bib`
+- **Làm gì:** Tìm kiếm web để đối chiếu thông tin các nguồn (RETFound Nature 2023, DDR/Information Sciences 2019, GDRNet/MICCAI 2023, Domain Generalization survey/TPAMI 2023, MAE/CVPR 2022, EyePACS/J Diabetes Sci Technol 2009, thang ICDR/Ophthalmology 2003); các nguồn kinh điển còn lại (ViT, ResNet, ImageNet, AdamW, SGDR, AMP, label smoothing, Cohen kappa, Bootstrap, Grad-CAM, t-SNE, Gulshan 2016) ghi theo thông tin chuẩn đã biết. Tổng **20 nguồn**, mỗi nguồn đều được `\cite` ít nhất một lần; đã bỏ `\nocite{*}`.
+- **Mục đích:** Có tài liệu tham khảo thật để trích dẫn trong chương 1–3.
+- **Kết quả đáng chú ý (đã đối chiếu bài Nature):** RETFound bản ảnh đáy mắt tiền huấn luyện trên **904.170** ảnh, ~90,2% MEH-MIDAS và ~9,8% **Kaggle EyePACS**, không nhãn (1,6 triệu là tổng cả OCT). → Việc "RETFound đã thấy EyePACS khi pretrain" là đúng, nên số in-domain của M1 có thể hơi lạc quan; DDR không nằm trong dữ liệu pretrain. (Lưu ý: `config.json` trên Hugging Face ghi `"dataset": "MEH MIDAS"`; bài Nature là nguồn chính thức cho bản natureCFP.)
+- **Cần soát tay trước khi nộp (không bịa, nhưng chưa đối chiếu từng chữ trên Google Scholar):** thứ tự tác giả DDR (Li, Gao, Wang, Guo, Liu, Kang), số trang MICCAI của GDRNet (đang để trống, chỉ ghi arXiv:2307.04378), danh sách đầy đủ tác giả RETFound (đang rút gọn bằng "and others").
+
+### W1.2 Sơ đồ (vẽ bằng Python: `code/figures/make_diagrams.py`)
+- `g01_pipeline.png` (mục 2.3), `g02_system_design.png` (mục 2.4), `g03_mae_retfound.png` (mục 2.2). Lưu ở `evidence_figures/06_diagrams/`, bản dùng cho báo cáo ở `Capstone-Project_latex/figures/`.
+
+### W1.3 Nội dung LaTeX đã viết
+- `metadata.tex` (tên đề tài EN, Group 3, 2 thành viên; **ngày nộp để trống đến cuối**); bỏ 3 slot thành viên thừa ở bìa (`sicaireport.cls`) và chương 5; bảng viết tắt; bỏ `\nocite{*}`.
+- Chương 1 (4 section, 15 subsection x.y.z, 3 giả thuyết H1–H3), chương 2 (2.1 dữ liệu với bảng số liệu đã xác minh; 2.2 phương pháp huấn luyện với **7 công thức đánh số** MAE, sampler, CE nhãn làm mượt, LLRD, cosine, QWK, ΔQWK; 2.3 workflow; 2.4 system design), chương 3 (3.1 tiền xử lý; 3.2 EDA với 5 hình d01–d05; 3.3–3.5 để `% [PENDING: ...]`), phụ lục A/B bằng code và siêu tham số thật (đánh dấu "planned" những giá trị chờ đo tốc độ).
+- Không có con số kết quả mô hình nào được bịa; bảng kết quả giả của template đã bị xóa.
+- Kiểm tra tĩnh bằng `code/figures/check_tex.py` (không cần LaTeX): nhãn/tham chiếu khớp, mọi `\cite` có trong bib, môi trường cân bằng, không có `\subsubsection`, đủ file hình. **Chưa biên dịch thật** (máy không có LaTeX) → cần bạn biên dịch trên Overleaf và báo lỗi nếu có.
+
+### Còn chờ (phụ thuộc kernel đóng gói)
+- Mục 3.1: kết quả QA, hình trước/sau cắt viền, kết quả kiểm tra ảnh trùng dHash (đang là `% [PENDING]`).

@@ -98,7 +98,7 @@ Thư mục template: `c:\SIC\Capstone-Project_latex\` (bắt nguồn từ `SIC_A
 |---|---|---|
 | **B1** | ResNet-50 pretrain ImageNet | Baseline thông thường |
 | **B2** | ViT-L MAE pretrain ImageNet | Cùng kiến trúc với RETFound, tách riêng tác dụng của SSL trên ảnh võng mạc |
-| **M1** | RETFound (ViT-L, MAE, 307M tham số, tiền huấn luyện trên 1,6 triệu ảnh võng mạc không nhãn; Nature 2023, UCL + Moorfields) fine-tune trên EyePACS-train | Mô hình chính |
+| **M1** | RETFound (ViT-L, MAE, 307M tham số, bản ảnh đáy mắt CFP tiền huấn luyện trên 904.170 ảnh không nhãn, ~90,2% từ MEH-MIDAS và ~9,8% từ Kaggle EyePACS (đã đối chiếu bài Nature 2023; con số 1,6 triệu gồm cả ảnh OCT), UCL + Moorfields) fine-tune trên EyePACS-train | Mô hình chính |
 | **M2** | M1 + augmentation mô phỏng domain shift (màu, gamma, blur, nhiễu, giảm chất lượng) | Phần mở rộng DG |
 
 **Cấu hình đề xuất:**

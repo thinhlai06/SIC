@@ -1,44 +1,182 @@
-@article{lecun2015deep,
-  author    = {Yann LeCun and Yoshua Bengio and Geoffrey Hinton},
-  title     = {Deep learning},
+% ==============================================================================
+% References for the capstone report (all entries checked against publisher /
+% proceedings / arXiv records; see docs/07 work log for the verification notes).
+% Compile with: xelatex -> biber -> xelatex -> xelatex.
+% ==============================================================================
+
+@article{retfound2023,
+  author    = {Zhou, Yukun and Chia, Mark A. and Wagner, Siegfried K. and Ayhan, Murat S. and Williamson, Dominic J. and Struyven, Robbert R. and Liu, Timing and Xu, Moucheng and Lozano, Mateo G. and others},
+  title     = {A foundation model for generalizable disease detection from retinal images},
   journal   = {Nature},
-  volume    = {521},
-  number    = {7553},
-  pages     = {436--444},
-  year      = {2015},
-  publisher = {Nature Publishing Group}
+  volume    = {622},
+  number    = {7981},
+  pages     = {156--163},
+  year      = {2023},
+  doi       = {10.1038/s41586-023-06555-x}
 }
 
-@inproceedings{vaswani2017attention,
-  author    = {Ashish Vaswani and Noam Shazeer and Niki Parmar and Jakob Uszkoreit and Llion Jones and Aidan N. Gomez and Lukasz Kaiser and Illia Polosukhin},
-  title     = {Attention is All You Need},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  volume    = {30},
-  pages     = {5998--6008},
-  year      = {2017}
+@inproceedings{mae2022,
+  author    = {He, Kaiming and Chen, Xinlei and Xie, Saining and Li, Yanghao and Doll{\'a}r, Piotr and Girshick, Ross},
+  title     = {Masked Autoencoders Are Scalable Vision Learners},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {16000--16009},
+  year      = {2022},
+  doi       = {10.1109/CVPR52688.2022.01553}
 }
 
-@inproceedings{he2016deep,
-  author    = {Kaiming He and Xiangyu Zhang and Shaoqing Ren and Jian Sun},
+@inproceedings{vit2021,
+  author    = {Dosovitskiy, Alexey and Beyer, Lucas and Kolesnikov, Alexander and Weissenborn, Dirk and Zhai, Xiaohua and Unterthiner, Thomas and Dehghani, Mostafa and Minderer, Matthias and Heigold, Georg and Gelly, Sylvain and Uszkoreit, Jakob and Houlsby, Neil},
+  title     = {An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2021}
+}
+
+@inproceedings{resnet2016,
+  author    = {He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
   title     = {Deep Residual Learning for Image Recognition},
   booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
   pages     = {770--778},
   year      = {2016}
 }
 
-@article{pedregosa2011scikit,
-  author    = {Fabian Pedregosa and Ga{\"e}l Varoquaux and Alexandre Gramfort and Vincent Michel and Bertrand Thirion and Olivier Grisel and Mathieu Blondel and Peter Prettenhofer and Ron Weiss and Vincent Dubourg and Jake Vanderplas and Alexandre Passos and David Cournapeau and Matthieu Brucher and Matthieu Perrot and {\'E}douard Duchesnay},
-  title     = {Scikit-learn: Machine Learning in {P}ython},
-  journal   = {Journal of Machine Learning Research},
-  volume    = {12},
-  pages     = {2825--2830},
-  year      = {2011}
+@inproceedings{imagenet2009,
+  author    = {Deng, Jia and Dong, Wei and Socher, Richard and Li, Li-Jia and Li, Kai and Fei-Fei, Li},
+  title     = {{ImageNet}: A large-scale hierarchical image database},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {248--255},
+  year      = {2009}
 }
 
-% ------------------------------------------------------------------------------
-% INSTRUCTIONS FOR ADDING YOUR OWN CITATIONS:
-% ------------------------------------------------------------------------------
-% 1. Add your BibTeX entries below.
-% 2. Use \cite{key} in your .tex chapter files.
-% 3. Compile with: xelatex -> biber -> xelatex -> xelatex.
-% ------------------------------------------------------------------------------
+@article{ddr2019,
+  author    = {Li, Tao and Gao, Yingqi and Wang, Kai and Guo, Song and Liu, Hanruo and Kang, Hong},
+  title     = {Diagnostic assessment of deep learning algorithms for diabetic retinopathy screening},
+  journal   = {Information Sciences},
+  volume    = {501},
+  pages     = {511--522},
+  year      = {2019},
+  doi       = {10.1016/j.ins.2019.06.011}
+}
+
+@article{eyepacs2009,
+  author    = {Cuadros, Jorge and Bresnick, George},
+  title     = {{EyePACS}: An Adaptable Telemedicine System for Diabetic Retinopathy Screening},
+  journal   = {Journal of Diabetes Science and Technology},
+  volume    = {3},
+  number    = {3},
+  pages     = {509--516},
+  year      = {2009},
+  doi       = {10.1177/193229680900300315}
+}
+
+@misc{kagglecomp2015,
+  author       = {{Kaggle and EyePACS}},
+  title        = {Diabetic Retinopathy Detection (competition)},
+  year         = {2015},
+  howpublished = {\url{https://www.kaggle.com/c/diabetic-retinopathy-detection}},
+  note         = {Accessed: 2026}
+}
+
+@article{icdr2003,
+  author    = {Wilkinson, C. P. and Ferris, Frederick L. and Klein, Ronald E. and Lee, Paul P. and Agardh, Carl David and Davis, Matthew and Dills, Diana and Kampik, Anselm and Pararajasegaram, R. and Verdaguer, Juan T.},
+  title     = {Proposed international clinical diabetic retinopathy and diabetic macular edema disease severity scales},
+  journal   = {Ophthalmology},
+  volume    = {110},
+  number    = {9},
+  pages     = {1677--1682},
+  year      = {2003},
+  doi       = {10.1016/S0161-6420(03)00475-5}
+}
+
+@article{gulshan2016,
+  author    = {Gulshan, Varun and Peng, Lily and Coram, Marc and Stumpe, Martin C. and Wu, Derek and Narayanaswamy, Arunachalam and Venugopalan, Subhashini and Widner, Kasumi and Madams, Tom and Cuadros, Jorge and others},
+  title     = {Development and Validation of a Deep Learning Algorithm for Detection of Diabetic Retinopathy in Retinal Fundus Photographs},
+  journal   = {JAMA},
+  volume    = {316},
+  number    = {22},
+  pages     = {2402--2410},
+  year      = {2016},
+  doi       = {10.1001/jama.2016.17216}
+}
+
+@article{dgsurvey2023,
+  author    = {Zhou, Kaiyang and Liu, Ziwei and Qiao, Yu and Xiang, Tao and Loy, Chen Change},
+  title     = {Domain Generalization: A Survey},
+  journal   = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume    = {45},
+  number    = {4},
+  pages     = {4396--4415},
+  year      = {2023},
+  doi       = {10.1109/TPAMI.2022.3195549}
+}
+
+@inproceedings{gdrnet2023,
+  author    = {Che, Haoxuan and Cheng, Yuhan and Jin, Haibo and Chen, Hao},
+  title     = {Towards Generalizable Diabetic Retinopathy Grading in Unseen Domains},
+  booktitle = {Medical Image Computing and Computer Assisted Intervention (MICCAI)},
+  year      = {2023},
+  note      = {arXiv:2307.04378}
+}
+
+@inproceedings{adamw2019,
+  author    = {Loshchilov, Ilya and Hutter, Frank},
+  title     = {Decoupled Weight Decay Regularization},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2019}
+}
+
+@inproceedings{sgdr2017,
+  author    = {Loshchilov, Ilya and Hutter, Frank},
+  title     = {{SGDR}: Stochastic Gradient Descent with Warm Restarts},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2017}
+}
+
+@inproceedings{mixedprec2018,
+  author    = {Micikevicius, Paulius and Narang, Sharan and Alben, Jonah and Diamos, Gregory and Elsen, Erich and Garcia, David and Ginsburg, Boris and Houston, Michael and Kuchaiev, Oleksii and Venkatesh, Ganesh and Wu, Hao},
+  title     = {Mixed Precision Training},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2018}
+}
+
+@inproceedings{labelsmooth2016,
+  author    = {Szegedy, Christian and Vanhoucke, Vincent and Ioffe, Sergey and Shlens, Jon and Wojna, Zbigniew},
+  title     = {Rethinking the Inception Architecture for Computer Vision},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {2818--2826},
+  year      = {2016}
+}
+
+@article{cohen1968,
+  author    = {Cohen, Jacob},
+  title     = {Weighted kappa: Nominal scale agreement with provision for scaled disagreement or partial credit},
+  journal   = {Psychological Bulletin},
+  volume    = {70},
+  number    = {4},
+  pages     = {213--220},
+  year      = {1968}
+}
+
+@book{efron1993,
+  author    = {Efron, Bradley and Tibshirani, Robert J.},
+  title     = {An Introduction to the Bootstrap},
+  publisher = {Chapman \& Hall},
+  address   = {New York},
+  year      = {1993}
+}
+
+@inproceedings{gradcam2017,
+  author    = {Selvaraju, Ramprasaath R. and Cogswell, Michael and Das, Abhishek and Vedantam, Ramakrishna and Parikh, Devi and Batra, Dhruv},
+  title     = {{Grad-CAM}: Visual Explanations from Deep Networks via Gradient-Based Localization},
+  booktitle = {Proceedings of the IEEE International Conference on Computer Vision (ICCV)},
+  pages     = {618--626},
+  year      = {2017}
+}
+
+@article{tsne2008,
+  author    = {van der Maaten, Laurens and Hinton, Geoffrey},
+  title     = {Visualizing Data using {t-SNE}},
+  journal   = {Journal of Machine Learning Research},
+  volume    = {9},
+  pages     = {2579--2605},
+  year      = {2008}
+}

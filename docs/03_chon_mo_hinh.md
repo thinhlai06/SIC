@@ -4,7 +4,7 @@
 
 - **Foundation model cho ảnh võng mạc**, đăng trên *Nature* (2023), do UCL và Bệnh viện Mắt Moorfields phát triển.
 - **Kiến trúc:** Vision Transformer cỡ Large (ViT-L/16), khoảng **307 triệu tham số**, input 224×224.
-- **Tiền huấn luyện tự giám sát bằng MAE** trên ~1,6 triệu ảnh võng mạc **không nhãn** (gồm ảnh đáy mắt và OCT; bản dùng cho ảnh đáy mắt tiền huấn luyện trên khoảng 900 nghìn ảnh đáy mắt từ MEH-MIDAS và Kaggle EyePACS ⚠ sẽ xác nhận con số chính xác khi trích dẫn).
+- **Tiền huấn luyện tự giám sát bằng MAE** trên ~1,6 triệu ảnh võng mạc **không nhãn** (gồm ảnh đáy mắt và OCT; ✅ đã đối chiếu bài Nature: bản ảnh đáy mắt tiền huấn luyện trên **904.170** ảnh, khoảng 90,2% từ MEH-MIDAS và 9,8% từ Kaggle EyePACS; khởi tạo từ trọng số MAE-ImageNet rồi huấn luyện tiếp trên ảnh võng mạc).
 - Sau đó **fine-tune** cho từng bài toán có nhãn (DR, glaucoma, bệnh tim mạch tiên lượng…).
 - Trọng số và code **công khai** (GitHub; trọng số bản ảnh đáy mắt cũng có trên Hugging Face — ⚠ có thể phải chấp nhận điều khoản).
 

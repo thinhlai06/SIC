@@ -4,42 +4,258 @@
 \section{Data Acquisition}
 \label{sec:data_acquisition}
 
-% [TODO: Describe data sources, collection methods, dataset properties, and licensing]
+The project uses exactly two image datasets and one family of pre-trained weights. All numbers in this section were verified by the team from the original label files, not copied from the literature. The raw statistics are archived in the project repository (\code{logs/probe\_report.json}).
+
+\subsection{Source Domain: EyePACS}
+\label{subsec:eyepacs}
+
+EyePACS is a United States tele-ophthalmology platform for DR screening \cite{eyepacs2009}. Its images were released through the 2015 Kaggle \emph{Diabetic Retinopathy Detection} competition \cite{kagglecomp2015}. The photographs come from many primary-care clinics and several camera models, so EyePACS already contains many sub-domains. Each image is graded by a single reader on the five-level ICDR scale (Table~\ref{tab:icdr}). The competition provides labels for its training part; labels for the competition test part are distributed together with the resized image version used here (Kaggle dataset \code{resized-2015-2019-blindness-detection-images}), whose label file marks every test image as \texttt{Public} or \texttt{Private}.
+
+We use the official partition of the competition: the training part is our training set, the \texttt{Public} part of the competition test set is our \emph{validation} set (model selection), and the \texttt{Private} part is our \emph{in-domain test} set. Table~\ref{tab:data_counts} lists the sizes and the grade distribution; the pairs of eyes of the same patient (\code{<id>\_left}, \code{<id>\_right}) are never split. We verified this by patient identifier: the training part contains 17{,}563 patients and the test part 26{,}788, with no patient shared between training and test, and none shared between the Public and Private parts.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Datasets and splits used in this project (images per ICDR grade).}
+    \label{tab:data_counts}
+    \small
+    \begin{tabularx}{\textwidth}{l l r r r r r r}
+        \toprule
+        \textbf{Dataset} & \textbf{Role} & \textbf{Total} & \textbf{G0} & \textbf{G1} & \textbf{G2} & \textbf{G3} & \textbf{G4} \\
+        \midrule
+        EyePACS train        & training                & 35{,}126 & 25{,}810 & 2{,}443 & 5{,}292 & 873 & 708 \\
+        EyePACS val (Public) & model selection         & 10{,}906 & 8{,}130  & 720     & 1{,}579 & 237 & 240 \\
+        EyePACS test (Private)& in-domain test         & 42{,}670 & 31{,}403 & 3{,}042 & 6{,}282 & 977 & 966 \\
+        DDR test             & out-of-domain test      & 3{,}759  & 1{,}880  & 189     & 1{,}344 & 71  & 275 \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Three weaknesses of EyePACS must be kept in mind: (i) the labels are noisy because each image is read by one grader; (ii) the data are strongly imbalanced, with grade~0 making up about 74\% of every part; and (iii) some images of poor quality are still labelled as grade~0 instead of being excluded.
+
+\subsection{Target Domain: DDR}
+\label{subsec:ddr}
+
+The DDR dataset \cite{ddr2019} was released by Nankai University. It contains 13{,}673 fundus photographs collected from 147 hospitals in 23 provinces of China between 2016 and 2018, graded by seven trained graders on the ICDR scale, with an additional class for images that cannot be graded. Compared with EyePACS, DDR therefore differs in country, population, camera models, grading protocol and number of graders, which is exactly the kind of difference the project wants to study.
+
+Only the \emph{official test split} of DDR is used. It contains 4{,}105 images; we removed the 346 ungradable images, which is the usual convention, leaving \textbf{3{,}759} graded images (Table~\ref{tab:data_counts}). The DDR training and validation splits are \emph{not used}: using any DDR image for training or tuning would turn it into a known domain, and the experiment would no longer measure generalization to an unseen domain. Grade~3 contains only 71 test images, so its recall and F1 are expected to fluctuate strongly, which is why every metric on DDR is reported with a bootstrap confidence interval (Section~\ref{subsec:metrics}). The pixel-level lesion annotations of DDR are not used.
+
+\subsection{Pre-trained Weights}
+\label{subsec:weights}
+
+Four starting points are compared (Table~\ref{tab:models}). ResNet-50 \cite{resnet2016} uses supervised ImageNet \cite{imagenet2009} weights. B2 and M1 share the same architecture, ViT-L/16 \cite{vit2021}, and differ only in the data on which the masked-autoencoder pre-training was done. For B2 these are ImageNet images \cite{mae2022}. For M1 they are the weights of RETFound (the colour-fundus variant) \cite{retfound2023}. According to the RETFound paper, the colour-fundus model was pre-trained on 904{,}170 colour fundus photographs, about 90.2\% from the Moorfields MEH-MIDAS dataset and about 9.8\% from the Kaggle EyePACS collection, without labels. Two consequences follow and are discussed again in Section~\ref{sec:testing_improvements}: DDR was \emph{not} part of this pre-training, so DDR remains an unseen domain, but some EyePACS images were, so the in-domain EyePACS-test result of M1 may be slightly optimistic. The RETFound weights are released under a CC BY-NC 4.0 licence; we use them for this non-commercial academic project and keep our copy in a private Kaggle dataset.
+
+\subsection{Evaluation Protocol and Leakage Control}
+\label{subsec:protocol}
+
+To make the comparison fair, three rules were fixed \emph{before} any training:
+
+\begin{enumerate}[leftmargin=1.8em]
+    \item \textbf{DDR is touched once.} DDR is never used to choose a checkpoint, an epoch, a learning rate or an augmentation strength. All such choices use EyePACS-validation only.
+    \item \textbf{Same pipeline for every model.} All four models see the same preprocessed images, the same splits and the same training budget; only the initial weights (and, for M2, the augmentation) differ.
+    \item \textbf{Test sets are evaluated at the very end}, once per frozen checkpoint.
+\end{enumerate}
+
+A duplicate check between EyePACS and DDR with a perceptual hash is part of the preprocessing (Section~\ref{sec:data_preprocessing}).
 
 \section{Training Methodology}
 \label{sec:training_methodology}
 
-% [TODO: Detail training methodology, hardware environment, loss functions, optimizers, and learning rate schedules]
+\subsection{Models Compared}
+\label{subsec:models}
+
+\begin{table}[htbp]
+    \centering
+    \caption{The four models compared. All are fine-tuned on EyePACS-train with the same pipeline.}
+    \label{tab:models}
+    \begin{tabularx}{\textwidth}{l l l X}
+        \toprule
+        \textbf{ID} & \textbf{Architecture} & \textbf{Initial weights} & \textbf{Question it answers} \\
+        \midrule
+        B1 & ResNet-50                & ImageNet (supervised)           & Conventional baseline \\
+        B2 & ViT-L/16 (307\,M params) & ImageNet, MAE                   & Same architecture as M1, but \emph{without} retinal pre-training: isolates the effect of retinal SSL \\
+        M1 & ViT-L/16 (RETFound)      & Retinal fundus images, MAE      & Main model \\
+        M2 & ViT-L/16 (RETFound)      & as M1                           & M1 plus domain-shift augmentation: isolates the effect of augmentation \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Each comparison answers one question. B2 versus M1 tells whether pre-training on \emph{retinal} images matters or whether the Vision Transformer architecture alone is responsible. M1 versus M2 tells whether domain-shift augmentation adds robustness. B1 versus M1 compares a conventional model with the project's main model. In addition, a \emph{linear probe} (frozen encoder, trainable linear head) is run for RETFound and B2 to measure how good the frozen representations are.
+
+\subsection{Masked Autoencoders and RETFound}
+\label{subsec:mae}
+
+A Vision Transformer splits an image into non-overlapping $16\times16$ patches, so a $224\times224$ image becomes a grid of $14\times14=196$ tokens that are processed by self-attention layers. In a masked autoencoder \cite{mae2022}, 75\% of the patches are removed at random, the encoder processes only the visible 25\%, and a light decoder reconstructs the hidden pixels. The pre-training loss is the mean squared error over the masked patches only:
+\begin{equation}
+    \mathcal{L}_{\text{MAE}} = \frac{1}{|\mathcal{M}|}\sum_{i\in\mathcal{M}} \left\lVert \mathbf{x}_i - \hat{\mathbf{x}}_i \right\rVert_2^2,
+    \label{eq:mae}
+\end{equation}
+where $\mathcal{M}$ is the set of masked patches, $\mathbf{x}_i$ the pixel values of patch $i$, and $\hat{\mathbf{x}}_i$ the decoder's reconstruction of it. To reconstruct a hidden patch the encoder must understand retinal structure, for example where the optic disc, the macula and the vessels are expected, without any human label. RETFound applies exactly this recipe to retinal images \cite{retfound2023}. Figure~\ref{fig:mae_retfound} shows how the pre-trained encoder is re-used: the decoder is discarded, the encoder is initialised from the pre-trained weights, and a linear head with five outputs is added on top of the average-pooled patch tokens.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/g03_mae_retfound.png}
+    \caption{Two-stage use of RETFound: self-supervised masked-autoencoder pre-training (Stage~A, done by the RETFound authors) and supervised fine-tuning for five-grade DR classification on EyePACS (Stage~B, done in this project).}
+    \label{fig:mae_retfound}
+\end{figure}
+
+Figure~\ref{fig:mae_retfound} makes the division of labour explicit. Stage~A is not repeated by the team; its cost is large and its weights are public. Our contribution is Stage~B and, above all, the controlled comparison of Table~\ref{tab:models}.
+
+\subsection{Fine-Tuning Recipe}
+\label{subsec:finetune}
+
+The fine-tuning recipe follows the official RETFound code. The optimiser is AdamW \cite{adamw2019} with weight decay 0.05, and the computation uses automatic mixed precision \cite{mixedprec2018} to fit the 307-million-parameter model on a 16\,GB T4 GPU. A small physical batch (16) is combined with gradient accumulation to reach an effective batch of 32.
+
+\emph{Layer-wise learning-rate decay} (LLRD) gives shallow layers, which hold general features, a smaller learning rate than deep layers. For a transformer with $L=24$ blocks, layer $l$ ($l=0$ is the patch embedding, $l=1,\dots,L$ the blocks, $l=L+1$ the head) uses
+\begin{equation}
+    \eta_l = \eta_{\text{base}}\;\gamma^{\,L+1-l},\qquad \gamma = 0.65,
+    \label{eq:llrd}
+\end{equation}
+where $\eta_{\text{base}}$ is the learning rate of the head and $\gamma\in(0,1)$ is the decay factor. The base rate follows the linear scaling rule, $\eta_{\text{base}} = \text{blr}\times B_{\text{eff}}/256$ with $\text{blr}=5\times10^{-3}$ and effective batch size $B_{\text{eff}}$. During training the rate follows a linear warm-up of $T_w$ steps and then a cosine decay \cite{sgdr2017}:
+\begin{equation}
+    \eta(t) =
+    \begin{cases}
+        \eta_{\max}\,\dfrac{t+1}{T_w}, & t < T_w,\\[2ex]
+        \eta_{\min} + \dfrac{1}{2}\,(\eta_{\max}-\eta_{\min})\left[1+\cos\!\left(\pi\,\dfrac{t-T_w}{T-T_w}\right)\right], & t \ge T_w,
+    \end{cases}
+    \label{eq:cosine}
+\end{equation}
+where $t$ is the current optimisation step, $T$ the total number of steps, $T_w$ the warm-up steps (one epoch), $\eta_{\max}$ the peak rate and $\eta_{\min}=10^{-6}$ the final rate. Other settings are drop-path 0.2, gradient clipping at norm 1.0 and ImageNet mean/standard-deviation input normalisation, as in the official fine-tuning code. For ResNet-50 (B1) the same optimiser and schedule are used with a single learning rate and no LLRD.
+% [PENDING: the number of epochs (planned: about 10), the peak learning rate and the batch size are confirmed after the Kaggle speed benchmark (phase 3); update Table~\ref{tab:hyperparameters} in Appendix B at that time]
+
+\subsection{Class Imbalance and Loss Function}
+\label{subsec:loss}
+
+Grade~0 makes up about 74\% of EyePACS-train, so an unweighted model can reach high accuracy by rarely predicting disease. We combine two standard remedies. First, training images are drawn with probability proportional to
+\begin{equation}
+    w_i = \frac{1}{\sqrt{n_{y_i}}},
+    \label{eq:sampler}
+\end{equation}
+where $n_{y_i}$ is the number of training images in the class $y_i$ of image $i$. This ``square-root balanced'' sampling raises the share of rare grades without making the model see a few rare images too often, as fully balanced sampling would. Second, the loss is cross-entropy with label smoothing \cite{labelsmooth2016}:
+\begin{equation}
+    \mathcal{L}_{\text{CE}} = -\sum_{k=0}^{K-1} q_k \log p_k,\qquad q_k = (1-\varepsilon)\,\mathbb{1}[k=y] + \frac{\varepsilon}{K},
+    \label{eq:ce}
+\end{equation}
+where $K=5$ is the number of grades, $p_k$ the predicted probability of grade $k$, $y$ the annotated grade, $\mathbb{1}[\cdot]$ the indicator function and $\varepsilon=0.1$ the smoothing factor. Label smoothing is useful here because EyePACS labels are noisy: it prevents the model from becoming over-confident in labels that may be wrong.
+
+\subsection{Domain-Shift Augmentation for M2}
+\label{subsec:dg_aug}
+
+All models use standard augmentation: random resized crop (scale 0.6--1), horizontal flip, rotation up to $20^\circ$ and light brightness/contrast jitter. Model M2 adds augmentation that imitates differences between cameras and sites, following the idea of FundusAug in GDRNet \cite{gdrnet2023}: stronger colour jitter, random per-channel gain (0.7--1.3) to produce colour casts, random gamma (0.7--1.5), Gaussian blur, JPEG re-compression with quality 30--90, additive noise and random erasing. Each operation is applied with its own probability. The ranges are generic and fixed in advance; they are \emph{not} tuned on DDR. A figure with a batch of EyePACS images under the standard and the domain-shift augmentation, side by side, will be added after the first training run.
+% [PENDING: insert figure t03_augmentation_M1_vs_M2.png after the first training run on Kaggle]
+
+\subsection{Evaluation Metrics}
+\label{subsec:metrics}
+
+\textbf{Quadratic weighted kappa (QWK)} \cite{cohen1968} is the primary metric. It measures the agreement between the model and the reference grades while penalising an error in proportion to the square of its distance on the ordinal scale, and it corrects for agreement expected by chance:
+\begin{equation}
+    \kappa = 1 - \frac{\sum_{i,j} w_{ij}\,O_{ij}}{\sum_{i,j} w_{ij}\,E_{ij}},\qquad w_{ij} = \frac{(i-j)^2}{(K-1)^2},
+    \label{eq:qwk}
+\end{equation}
+where $O_{ij}$ is the number of images with reference grade $i$ that the model predicts as $j$, $E_{ij}$ is the count expected by chance (the outer product of the two marginal histograms, scaled to the same total) and $w_{ij}$ is the quadratic penalty. $\kappa=1$ means perfect agreement, $\kappa=0$ chance level and negative values worse than chance. QWK is chosen because the grades are ordinal and because, unlike accuracy, it is not inflated by the dominant grade~0.
+
+The secondary metrics are \textbf{macro-F1} (the unweighted mean of the five per-grade F1 scores), the \textbf{recall of every grade}, the \textbf{AUC for referable DR} (grade $\ge 2$ against grade $<2$) and accuracy. Because the grade proportions of EyePACS and DDR differ, accuracy is \emph{not} comparable across the two datasets: a model that always predicts grade~0 would score about 74\% on EyePACS-test but only 50\% on DDR-test while being equally useless on both. The robustness of a model is measured by the drop between the in-domain and the out-of-domain test,
+\begin{equation}
+    \Delta\text{QWK} = \kappa_{\text{EyePACS-test}} - \kappa_{\text{DDR-test}},
+    \label{eq:delta}
+\end{equation}
+where a smaller $\Delta\text{QWK}$ means that the model loses less when the imaging domain changes. Every metric on the test sets is accompanied by a 95\% \emph{bootstrap} confidence interval \cite{efron1993}: the test set is resampled with replacement 1{,}000 times, the metric is recomputed on each resample, and the 2.5th and 97.5th percentiles are reported. Differences between two models are tested with a paired bootstrap on the same resamples, and a model is called better only if the intervals do not overlap substantially. For models trained with three seeds, the mean and standard deviation over seeds are reported in addition.
+
+\subsection{Diagnostic Analysis}
+\label{subsec:diagnostics}
+
+Two tools are used to understand \emph{why} a model behaves as it does. Grad-CAM \cite{gradcam2017} highlights the image regions that contributed most to a prediction; we use it on correct and wrong predictions to check whether the models look at lesions (haemorrhages, exudates) or at borders and other camera-specific artefacts. t-SNE \cite{tsne2008} projects the feature vectors of the encoder to two dimensions; colouring the points by dataset shows whether EyePACS and DDR images form separate clusters, and colouring them by grade shows whether the grades are separated. If SSL pre-training makes the representation less dependent on the imaging domain, the two datasets should overlap more for M1 than for B1 and B2. This is a hypothesis to be checked, not an assumption.
+
+\subsection{Compute Environment and Reproducibility}
+\label{subsec:compute}
+
+All training runs on Kaggle notebooks with NVIDIA Tesla T4 GPUs (16\,GB). Kaggle counts the quota by wall-clock time, not by the number of GPUs, so two independent runs are executed in parallel, one on each of the two GPUs, instead of splitting a single run across both. The quota is about 30 GPU hours in total. Every run writes a per-epoch CSV/JSON log (losses, validation QWK, learning rate, time, memory) and the evidence figures to its output folder; the seed, the configuration and the Python library versions are stored with the log so that a run can be repeated.
 
 \section{Workflow}
 \label{sec:workflow}
 
-% [TODO: Present the end-to-end pipeline workflow from raw input to inference output]
+\subsection{End-to-End Pipeline}
+\label{subsec:pipeline}
 
-\section{System Design}
-\label{sec:system_design}
-% NOTE & TODO [SOURCE VARIATION NOTICE]:
-% In the original Word template document (SIC_AI_Capstone Project_Final Report.docx):
-% - Table of Contents (Page 3) uses: "2.4. System Diagram"
-% - Chapter 2 Body Heading (Page 4) uses: "2.4. System Design"
-% Following the project specification, the original section heading "System Design" is preserved here.
-% If your instructor or committee prefers "System Diagram", you may adjust the heading text above.
+Figure~\ref{fig:pipeline} summarises the workflow. Raw images from EyePACS and DDR are preprocessed in the same way (step~2), the four models are trained on EyePACS-train only (step~3), the checkpoint of each run is selected by the validation QWK on EyePACS-validation (step~4) and then frozen. Only after that are the two test sets evaluated, once (step~5), followed by metrics and diagnostic analysis (step~6) and the demo and report (step~7). The green box of step~4 is the key control of the study: no information from DDR flows into any decision before step~5.
 
 \begin{figure}[htbp]
     \centering
-    % Placeholder for system architecture diagram
-    \setlength{\fboxrule}{0.8pt}%
-    \setlength{\fboxsep}{20pt}%
-    \fcolorbox{SamsungGray}{white}{%
-        \parbox{0.85\textwidth}{%
-            \centering\vspace{1.5cm}
-            \sffamily\color{SamsungDarkGray}
-            {\large\bfseries [System Architecture Diagram / Workflow Diagram]}\par
-            \vspace{0.4cm}
-            \footnotesize Replace this box with: \texttt{\textbackslash includegraphics[width=0.9\textbackslash textwidth]\{figures/system\_design.png\}}\par
-            \vspace{1.5cm}
-        }%
-    }
-    \caption{Overall System Architecture and Pipeline Flow}
+    \includegraphics[width=\textwidth]{figures/g01_pipeline.png}
+    \caption{End-to-end workflow of the project, from raw datasets to metrics, analysis and demo. The green box marks the point at which the checkpoint is frozen using EyePACS-validation only.}
+    \label{fig:pipeline}
+\end{figure}
+
+\subsection{Which Data Is Used for What}
+\label{subsec:data_roles}
+
+Table~\ref{tab:data_roles} lists, for every split, the activities in which it may take part. This is the practical form of the leakage rules of Section~\ref{subsec:protocol}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Permitted use of each data split. \checkmark = used; -- = never used for this purpose.}
+    \label{tab:data_roles}
+    \begin{tabularx}{\textwidth}{l c c c c}
+        \toprule
+        \textbf{Split} & \textbf{Gradient updates} & \textbf{Checkpoint / hyper-parameter choice} & \textbf{Final metrics} & \textbf{Analysis (Grad-CAM, t-SNE)} \\
+        \midrule
+        EyePACS train        & \checkmark & -- & -- & \checkmark \\
+        EyePACS val (Public) & -- & \checkmark & -- & \checkmark \\
+        EyePACS test (Private)& -- & -- & \checkmark & \checkmark \\
+        DDR test             & -- & -- & \checkmark & \checkmark \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Experiment Matrix}
+\label{subsec:experiment_matrix}
+
+Table~\ref{tab:experiments} lists the planned runs. The number of seeds is limited by the GPU quota: M1, M2 and B1 receive three seeds each, B2 one seed, and additional B2 seeds are added only if hours remain.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Planned experiment matrix.}
+    \label{tab:experiments}
+    \begin{tabularx}{\textwidth}{l l c X}
+        \toprule
+        \textbf{ID} & \textbf{Training mode} & \textbf{Seeds} & \textbf{Purpose} \\
+        \midrule
+        B1 & Full fine-tuning & 3 & Conventional baseline \\
+        B2 & Full fine-tuning & 1 (more if budget allows) & Same architecture as M1, no retinal pre-training \\
+        M1 & Full fine-tuning & 3 & Main model \\
+        M2 & Full fine-tuning + domain-shift augmentation & 3 & Effect of domain-shift augmentation \\
+        LP-M1, LP-B2 & Linear probe (frozen encoder) & 1 & Quality of the frozen representations \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+% [PENDING: confirm the number of seeds and epochs after the Kaggle speed benchmark]
+
+\section{System Design}
+\label{sec:system_design}
+
+\subsection{Architecture Overview}
+\label{subsec:architecture}
+
+Figure~\ref{fig:system_design} shows where each component runs. The team has no local GPU, so everything that is computationally heavy runs on Kaggle: the preprocessing kernel (CPU) crops and resizes about 92{,}000 images once and writes a cache of $224\times224$ JPEG files, a packaging kernel (CPU) verifies the cache and packs it into a few large archive files, the training kernel (GPU) runs the experiment matrix, and an evaluation kernel (GPU) computes test metrics, bootstrap intervals, Grad-CAM and t-SNE. The RETFound weights are stored in a private Kaggle dataset. Logs, figures and the selected checkpoints are downloaded to the local machine, where the web demo runs on the CPU and the report is compiled on Overleaf.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/g02_system_design.png}
+    \caption{System design: data sources, Kaggle compute kernels, and the local machine that hosts the demo and the report.}
     \label{fig:system_design}
 \end{figure}
+
+\subsection{Design Decisions}
+\label{subsec:design_decisions}
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Cache once, train many times.} The original EyePACS data are about 89\,GB; a resized $224\times224$ JPEG cache of all 92{,}000 images is only a few gigabytes and is read quickly by every training run.
+    \item \textbf{Archives instead of 92{,}000 small files.} Kaggle's file listing and download API are slow and rate-limited for very many small files, so the cache is packed into four tar archives (train, validation, EyePACS-test, DDR-test).
+    \item \textbf{Test sets are packed separately and are not extracted by the training script}, which makes accidental use of test images during training impossible by construction.
+    \item \textbf{CPU kernels for preprocessing.} They do not consume the GPU quota, which is reserved for training.
+\end{itemize}
+
+\subsection{Demo Application}
+\label{subsec:demo_design}
+
+The demo is a Gradio web application with an English interface. A user uploads a fundus photograph; the application applies the same preprocessing as in training, runs the selected model on the CPU, and displays the predicted DR grade, the probability of each grade, a referable/non-referable indication and a Grad-CAM \cite{gradcam2017} overlay showing which regions influenced the decision. Its screenshots are presented in Section~\ref{sec:user_interface}.
+% [PENDING: demo implemented after the final checkpoints are available (phase 9)]

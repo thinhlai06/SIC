@@ -2,55 +2,82 @@
 \chapter{Source Code and Implementation Details}
 \label{app:code}
 
-This appendix provides key excerpts of the core model pipeline implementation.
+This appendix gives key excerpts of the training library used on Kaggle (\code{code/train/train\_lib.py} in the project repository \url{https://github.com/thinhlai06/SIC}). The excerpts correspond to Equations~\eqref{eq:llrd}, \eqref{eq:sampler}, \eqref{eq:cosine} and \eqref{eq:qwk}.
+% [PENDING: re-check the excerpts against the final version of train_lib.py before submission]
 
-\begin{lstlisting}[language=Python, caption={Core Training Loop and Metric Evaluation Pipeline}, label={lst:training_loop}]
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
+\begin{lstlisting}[language=Python, caption={Layer-wise learning-rate decay: parameter groups for a ViT (Equation~\eqref{eq:llrd}).}, label={lst:llrd}]
+def param_groups(model, cfg, base_lr):
+    """AdamW groups; layer-wise LR decay for ViT, no weight decay on 1-d params."""
+    is_vit = hasattr(model, "blocks")
+    n_layers = len(model.blocks) + 1 if is_vit else 0
+    groups = {}
+    for n, p in model.named_parameters():
+        if not p.requires_grad: continue
+        if is_vit:
+            if n.startswith(("cls_token", "pos_embed", "patch_embed")): lid = 0
+            elif n.startswith("blocks."): lid = int(n.split(".")[1]) + 1
+            else: lid = n_layers
+            scale = cfg["ld"] ** (n_layers - lid)
+        else:
+            scale = 1.0
+        wd = 0.0 if (p.ndim == 1 or n.endswith(".bias")
+                     or n in ("cls_token", "pos_embed")) else cfg["wd"]
+        key = (scale, wd)
+        groups.setdefault(key, {"params": [], "lr_scale": scale,
+                                "weight_decay": wd})["params"].append(p)
+    return list(groups.values())
+\end{lstlisting}
 
-def train_one_epoch(model: nn.Module, 
-                    dataloader: DataLoader, 
-                    optimizer: torch.optim.Optimizer, 
-                    criterion: nn.Module, 
-                    device: torch.device) -> float:
-    """
-    Executes a single epoch pass over the training dataset.
-    """
-    model.train()
-    running_loss = 0.0
-    for batch_idx, (inputs, targets) in enumerate(dataloader):
-        inputs, targets = inputs.to(device), targets.to(device)
-        
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
-        
-        running_loss += loss.item() * inputs.size(0)
-        
-    epoch_loss = running_loss / len(dataloader.dataset)
-    return epoch_loss
+\begin{lstlisting}[language=Python, caption={Square-root balanced sampler (Equation~\eqref{eq:sampler}) and warm-up plus cosine learning-rate schedule (Equation~\eqref{eq:cosine}).}, label={lst:sampler_lr}]
+cnt = np.bincount(ytr, minlength=5).astype(float)
+w = cnt[ytr] ** -0.5                      # sampling weight of every image
+sampler = WeightedRandomSampler(torch.tensor(w / w.sum()),
+                                num_samples=len(tr_items), replacement=True)
+
+def lr_at(s):                             # s = optimisation step
+    if s < warm:
+        return base_lr * (s + 1) / max(1, warm)
+    pr = (s - warm) / max(1, total - warm)
+    return cfg["min_lr"] + (base_lr - cfg["min_lr"]) * 0.5 * (1 + math.cos(math.pi * pr))
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption={Validation metrics, with quadratic weighted kappa (Equation~\eqref{eq:qwk}) as the model-selection criterion.}, label={lst:metrics}]
+def metrics(y, pred, logits=None):
+    from sklearn.metrics import cohen_kappa_score, f1_score, recall_score
+    r = recall_score(y, pred, labels=list(range(5)), average=None, zero_division=0)
+    return dict(qwk=float(cohen_kappa_score(y, pred, weights="quadratic")),
+                acc=float((y == pred).mean()),
+                macro_f1=float(f1_score(y, pred, labels=list(range(5)),
+                                        average="macro", zero_division=0)),
+                recall=[float(x) for x in r])
 \end{lstlisting}
 
 \chapter{Hyperparameter Configurations}
 \label{app:hyperparameters}
 
+Table~\ref{tab:hyperparameters} lists the settings of the fine-tuning recipe of Section~\ref{subsec:finetune}.
+% [PENDING: values marked (planned) are confirmed or changed after the Kaggle speed benchmark; update this table with the final values actually used]
+
 \begin{table}[htbp]
     \centering
-    \caption{Detailed Experimental Hyperparameter Settings}
+    \caption{Fine-tuning hyperparameters (ViT-L models; ResNet-50 uses a single learning rate without layer-wise decay).}
     \label{tab:hyperparameters}
     \begin{tabularx}{\textwidth}{l l X}
         \toprule
-        \textbf{Hyperparameter} & \textbf{Selected Value} & \textbf{Description / Search Space} \\
+        \textbf{Hyperparameter} & \textbf{Value} & \textbf{Description / Source} \\
         \midrule
-        Base Learning Rate      & $1 \times 10^{-4}$      & Cosine Annealing scheduler with warm restart \\
-        Batch Size              & 32                      & Optimized for GPU memory throughput \\
-        Optimizer               & AdamW                   & $\beta_1 = 0.9, \beta_2 = 0.999, \text{weight\_decay} = 0.01$ \\
-        Training Epochs         & 100                     & Early stopping with patience of 10 epochs \\
-        Input Resolution        & $224 \times 224$        & Standard input tensor dimensions \\
-        Loss Function           & Cross-Entropy           & Label smoothing $\alpha = 0.1$ \\
+        Input resolution        & $224 \times 224$        & Cropped and padded to square (Section~\ref{subsec:prep_pipeline}) \\
+        Optimizer               & AdamW                   & $\beta_1 = 0.9$, $\beta_2 = 0.999$, weight decay 0.05 (not applied to biases and 1-D parameters) \\
+        Base learning rate rule & $5\times10^{-3}\times B_{\text{eff}}/256$ & Linear scaling rule of the official RETFound fine-tuning code \\
+        Layer-wise LR decay     & 0.65                    & Equation~\eqref{eq:llrd}, 24 transformer blocks \\
+        Schedule                & Warm-up + cosine        & 1 warm-up epoch, final rate $10^{-6}$ (Equation~\eqref{eq:cosine}) \\
+        Physical / effective batch & 16 / 32              & Gradient accumulation of 2 steps (planned) \\
+        Epochs                  & about 10 (planned)      & Best epoch chosen by EyePACS-validation QWK \\
+        Loss                    & Cross-entropy           & Label smoothing 0.1 (Equation~\eqref{eq:ce}) \\
+        Sampler                 & Square-root balanced    & Equation~\eqref{eq:sampler} \\
+        Drop-path / grad. clip  & 0.2 / 1.0               & Regularisation and stability \\
+        Precision               & AMP (fp16)              & Mixed precision on Tesla T4 \\
+        Seeds                   & 0, 1, 2 (planned)       & M1, M2, B1; one seed for B2 \\
         \bottomrule
     \end{tabularx}
 \end{table}
