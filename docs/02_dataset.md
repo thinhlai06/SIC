@@ -74,4 +74,14 @@ Mất cân bằng nặng (lớp 0 chiếm khoảng 73–74% ở mọi tập).
 | Kích thước ảnh | Rất đa dạng | Đa dạng |
 | Vai trò | Train / val / test in-domain | Test out-of-domain (kết quả chính) |
 
+### Kết quả probe trên Kaggle (CPU, đã chạy xong)
+
+Số liệu thô: `logs/probe_report.json`; hình: `evidence_figures/01_data/d01`–`d05`; thống kê mẫu 400 ảnh mỗi bộ: `logs/stats_*_sample.csv`.
+
+- **Toàn vẹn:** EyePACS không thiếu file nào (35.126 train, 53.576 test); DDR đủ 4.105 file. Số liệu khớp 100% với phân tích nhãn ở trên.
+- **Khung hình (domain gap thứ nhất):** võng mạc chiếm khoảng **83%** diện tích ảnh EyePACS (bản resize, đã cắt khá sát) nhưng chỉ khoảng **52%** ở DDR (viền đen rộng). Cần **cắt theo vùng võng mạc** trước khi resize về 224×224, nếu không võng mạc DDR sẽ chỉ chiếm nửa ảnh đầu vào.
+- **Kích thước:** EyePACS (resize) cạnh dài tối đa 1024 px, trung vị khoảng 1024×946; DDR rất lớn, trung vị khoảng 2736×1824, tối đa 5184×3456. Hình dạng vùng võng mạc của DDR hay là hình **elip** (không tròn như EyePACS).
+- **Màu (domain gap thứ hai):** trung bình trong vùng võng mạc, kênh xanh dương: EyePACS khoảng 67, DDR khoảng 38; kênh xanh lá và đỏ cũng lệch. DDR ngả **cam/vàng**, EyePACS sáng và nhiều xanh hơn. Đây là bằng chứng định lượng cho việc dùng augmentation màu ở M2.
+- **Phân bố lớp:** giống hệt kết quả phân tích nhãn (lớp 0 khoảng 74% ở EyePACS, DDR-test khoảng 50% lớp 0 và 36% lớp 2).
+
 Các hình EDA sẽ được lưu vào `evidence_figures/01_data/` (phân bố lớp, kích thước ảnh, ảnh mẫu mỗi mức, thống kê màu/độ sáng trung bình để thấy khoảng cách miền).
