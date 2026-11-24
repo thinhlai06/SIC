@@ -1,0 +1,59 @@
+{
+  "name": "bench_b2",
+  "cfg": {
+    "name": "bench_b2",
+    "arch": "vitl_mae_in",
+    "aug": "std",
+    "seed": 0,
+    "epochs": 1,
+    "bs": 8,
+    "accum": 4,
+    "blr": 0.005,
+    "ld": 0.65,
+    "wd": 0.05,
+    "drop_path": 0.2,
+    "ls": 0.1,
+    "lr": null,
+    "warmup_epochs": 1.0,
+    "min_lr": 1e-06,
+    "clip": 1.0,
+    "sampler": "sqrt",
+    "num_workers": 2,
+    "pretrained_path": "mae_pretrain_vit_large.pth",
+    "max_steps": 40,
+    "val_max": 800,
+    "time_limit_min": 0,
+    "grad_ckpt": false,
+    "aug_figure": false,
+    "save_ckpt": false,
+    "final_eval": false,
+    "gpu": 1
+  },
+  "best_val_qwk": 0.0,
+  "best_epoch": 1,
+  "epochs_run": 1,
+  "total_minutes": 0.8337454915046691,
+  "rows": [
+    {
+      "epoch": 1,
+      "train_loss": 1.4830272972583771,
+      "val_loss": 1.0527683448791505,
+      "val_qwk": 0.0,
+      "val_acc": 0.77,
+      "val_macro_f1": 0.17401129943502824,
+      "val_recall": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "lr": 2.2789425706472198e-05,
+      "train_img_per_s": 30.428616088181137,
+      "val_img_per_s": 100.69732162497708,
+      "epoch_minutes": 0.8335046132405599,
+      "peak_mem_gb": 6.96957184
+    }
+  ],
+  "test_metrics": null
+}

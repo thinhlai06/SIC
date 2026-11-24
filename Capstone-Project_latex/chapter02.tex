@@ -79,7 +79,7 @@ A duplicate check between EyePACS and DDR with a perceptual hash is part of the 
     \end{tabularx}
 \end{table}
 
-Each comparison answers one question. B2 versus M1 tells whether pre-training on \emph{retinal} images matters or whether the Vision Transformer architecture alone is responsible. M1 versus M2 tells whether domain-shift augmentation adds robustness. B1 versus M1 compares a conventional model with the project's main model. In addition, a \emph{linear probe} (frozen encoder, trainable linear head) is run for RETFound and B2 to measure how good the frozen representations are.
+Each comparison answers one question. B2 versus M1 tells whether pre-training on \emph{retinal} images matters or whether the Vision Transformer architecture alone is responsible. M1 versus M2 tells whether domain-shift augmentation adds robustness. B1 versus M1 compares a conventional model with the project's main model. A linear probe (frozen encoder with a trainable linear head), which would measure the quality of the frozen representations alone, was considered but dropped because of the limited time; all four models are fully fine-tuned.
 
 \subsection{Masked Autoencoders and RETFound}
 \label{subsec:mae}
@@ -120,7 +120,8 @@ where $\eta_{\text{base}}$ is the learning rate of the head and $\gamma\in(0,1)$
     \label{eq:cosine}
 \end{equation}
 where $t$ is the current optimisation step, $T$ the total number of steps, $T_w$ the warm-up steps (one epoch), $\eta_{\max}$ the peak rate and $\eta_{\min}=10^{-6}$ the final rate. Other settings are drop-path 0.2, gradient clipping at norm 1.0 and ImageNet mean/standard-deviation input normalisation, as in the official fine-tuning code. For ResNet-50 (B1) the same optimiser and schedule are used with a single learning rate and no LLRD.
-% [PENDING: the number of epochs (planned: about 10), the peak learning rate and the batch size are confirmed after the Kaggle speed benchmark (phase 3); update Table~\ref{tab:hyperparameters} in Appendix B at that time]
+
+% [PENDING: training length. Measured speed (Kaggle benchmark, logs/_bench): ViT-L about 36 training img/s at batch 16 (peak 8.4 GB), 114 img/s inference; ResNet-50 about 192 img/s. First run uses 5 epochs for ViT-L (cosine schedule). Write the final epoch count, the reason for it and any limitation AFTER the first results show whether validation QWK has plateaued (the user asked not to write this before seeing the run).]
 
 \subsection{Class Imbalance and Loss Function}
 \label{subsec:loss}

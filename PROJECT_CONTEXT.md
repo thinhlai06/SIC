@@ -10,7 +10,7 @@
 | Mục | Giá trị |
 |---|---|
 | Chương trình | Samsung Innovation Campus – AI Course (Capstone Project Final Report) |
-| Lớp / Giảng viên | SIC-AI-N02 / TS. Trần Quang Quý (đã có sẵn trong `metadata.tex`) |
+| Lớp / Giảng viên | SIC-AI-N05 / TS. Trần Quang Quý (đã có sẵn trong `metadata.tex`) |
 | Team name | Group 3 |
 | Thành viên (2 người) | **Lai Van Thinh**, **Tran Thuy Duyen** |
 | Vai trò (đã đồng ý) | Lai Van Thinh: mô hình & huấn luyện. Tran Thuy Duyen: dữ liệu, đánh giá, demo web |

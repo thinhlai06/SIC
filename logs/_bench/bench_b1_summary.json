@@ -1,0 +1,59 @@
+{
+  "name": "bench_b1",
+  "cfg": {
+    "name": "bench_b1",
+    "arch": "resnet50",
+    "aug": "std",
+    "seed": 0,
+    "epochs": 1,
+    "bs": 32,
+    "accum": 1,
+    "blr": null,
+    "ld": 0.65,
+    "wd": 0.05,
+    "drop_path": 0.2,
+    "ls": 0.1,
+    "lr": 0.0001,
+    "warmup_epochs": 1.0,
+    "min_lr": 1e-06,
+    "clip": 1.0,
+    "sampler": "sqrt",
+    "num_workers": 2,
+    "pretrained_path": "resnet50_tv_in1k.safetensors",
+    "max_steps": 60,
+    "val_max": 800,
+    "time_limit_min": 0,
+    "grad_ckpt": false,
+    "aug_figure": false,
+    "save_ckpt": false,
+    "final_eval": false,
+    "gpu": 1
+  },
+  "best_val_qwk": 0.14500238704917323,
+  "best_epoch": 1,
+  "epochs_run": 1,
+  "total_minutes": 0.21130189498265584,
+  "rows": [
+    {
+      "epoch": 1,
+      "train_loss": 1.5327393333117167,
+      "val_loss": 1.2653331661224365,
+      "val_qwk": 0.14500238704917323,
+      "val_acc": 0.655,
+      "val_macro_f1": 0.21359181475498118,
+      "val_recall": [
+        0.8051948051948052,
+        0.0,
+        0.2621359223300971,
+        0.0,
+        0.047619047619047616
+      ],
+      "lr": 5.469462169553327e-06,
+      "train_img_per_s": 192.17015952001606,
+      "val_img_per_s": 298.29115523083794,
+      "epoch_minutes": 0.2112183411916097,
+      "peak_mem_gb": 1.8082048
+    }
+  ],
+  "test_metrics": null
+}

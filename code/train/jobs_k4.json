@@ -1,0 +1,30 @@
+[
+ {
+  "name": "m1_s2",
+  "seed": 2,
+  "gpu": 0,
+  "final_eval": true,
+  "save_ckpt": true,
+  "time_limit_min": 150,
+  "arch": "retfound",
+  "pretrained_path": "RETFound_mae_natureCFP.pth",
+  "epochs": 5,
+  "bs": 16,
+  "accum": 2,
+  "aug": "std"
+ },
+ {
+  "name": "m2_s2",
+  "seed": 2,
+  "gpu": 1,
+  "final_eval": true,
+  "save_ckpt": true,
+  "time_limit_min": 150,
+  "arch": "retfound",
+  "pretrained_path": "RETFound_mae_natureCFP.pth",
+  "epochs": 5,
+  "bs": 16,
+  "accum": 2,
+  "aug": "dg"
+ }
+]

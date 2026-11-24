@@ -1,0 +1,59 @@
+{
+  "name": "bench_m1",
+  "cfg": {
+    "name": "bench_m1",
+    "arch": "retfound",
+    "aug": "std",
+    "seed": 0,
+    "epochs": 1,
+    "bs": 16,
+    "accum": 2,
+    "blr": 0.005,
+    "ld": 0.65,
+    "wd": 0.05,
+    "drop_path": 0.2,
+    "ls": 0.1,
+    "lr": null,
+    "warmup_epochs": 1.0,
+    "min_lr": 1e-06,
+    "clip": 1.0,
+    "sampler": "sqrt",
+    "num_workers": 2,
+    "pretrained_path": "RETFound_mae_natureCFP.pth",
+    "max_steps": 40,
+    "val_max": 800,
+    "time_limit_min": 0,
+    "grad_ckpt": false,
+    "aug_figure": true,
+    "save_ckpt": false,
+    "final_eval": false,
+    "gpu": 0
+  },
+  "best_val_qwk": -0.00204964700523802,
+  "best_epoch": 1,
+  "epochs_run": 1,
+  "total_minutes": 0.7046042164166768,
+  "rows": [
+    {
+      "epoch": 1,
+      "train_loss": 1.470495568215847,
+      "val_loss": 1.0623259830474854,
+      "val_qwk": -0.00204964700523802,
+      "val_acc": 0.76875,
+      "val_macro_f1": 0.17385159010600706,
+      "val_recall": [
+        0.9983766233766234,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "lr": 2.2789425706472198e-05,
+      "train_img_per_s": 36.2987760044045,
+      "val_img_per_s": 114.17814385423823,
+      "epoch_minutes": 0.7044917027155558,
+      "peak_mem_gb": 8.366733824
+    }
+  ],
+  "test_metrics": null
+}
