@@ -167,3 +167,10 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 - Biến thể ordinal (ngưỡng chỉ fit trên EyePACS-val): DDR B2 0.744, M1 0.727, M2 0.753.
 - Nhận xét trung thực: giả thuyết M1 > B2 trên DDR KHÔNG được ủng hộ ở 5 epoch; RETFound giữ QWK ổn định giữa hai miền (ΔQWK ≈ 0 khớp prior) nhưng không cao hơn tuyệt đối. QWK val vẫn tăng ở epoch 5 → chờ K3 (8 epoch) để xem độ nhạy.
 - Grad-CAM (a01), curves (t_curves_all), t-SNE, confusion, ROC, recall, bootstrap đã tạo.
+
+## 25/11 06:30–07:00 — viết báo cáo phần kết quả
+- Quyết định: bộ so sánh chính = 5 epoch cho cả 4 mô hình (cùng ngân sách); 8 epoch (K3) chỉ là kiểm tra độ nhạy cho M1/B2.
+- Đã sửa cho khớp thực tế: g01/g02 (số seed, đánh giá cuối nằm trong kernel huấn luyện, phân tích chạy local, MiKTeX), bảng ma trận thí nghiệm (bỏ linear probe, B1 3 seed, còn lại 1 seed), Mục tiêu 1.2.3, Phụ lục B (epoch, seed), mục 2.2.3 (độ dài huấn luyện), mục 2.2.5 thêm hình augmentation, 2.4.1 (kiến trúc).
+- Đã viết: 3.3 (động học huấn luyện, kết quả chính, so sánh khớp tỉ lệ nhãn, từng mức, ROC, biến thể ordinal, Grad-CAM/t-SNE, bảng tóm tắt giả thuyết), 3.4 (demo, ảnh chụp thật với M1), 3.5 phân tích lỗi, chương 4.
+- Phát hiện trung thực: H1, H2, H3 không được ủng hộ ở 5 epoch; M1 lỗi nghiêng về chấm quá cao (ít bỏ sót) còn B2/M2 chấm thấp hơn thực tế.
+- Còn chờ K3: mục 3.3.8, câu hạn chế về ngân sách huấn luyện, 1 câu ở chương 4.

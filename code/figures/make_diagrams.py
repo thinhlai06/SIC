@@ -54,9 +54,9 @@ def g01():
     box(ax, 0.2, 3.7, 2.7, 1.9, "1. Raw data", ["EyePACS: train 35,126", "val 10,906 · test 42,670",
                                               "DDR: test only, 3,759", "(ungradable removed)"], fs=9.5)
     box(ax, 3.6, 3.7, 2.9, 1.9, "2. Preprocessing", ["crop black border", "pad to square → 224×224",
-                                                   "JPEG cache · dHash duplicate", "check (EyePACS ↔ DDR)"], fs=9.5)
-    box(ax, 7.2, 3.7, 2.7, 1.9, "3. Training", ["EyePACS-train only", "B1 · B2 · M1 · M2", "3 seeds (B2: 1)",
-                                              "AMP fp16, AdamW"], fs=9.5)
+                                                   "JPEG cache · duplicate check", "dHash + NCC (EyePACS ↔ DDR)"], fs=9.5)
+    box(ax, 7.2, 3.7, 2.7, 1.9, "3. Training", ["EyePACS-train only", "B1 · B2 · M1 · M2", "5 epochs · B1: 3 seeds",
+                                              "B2, M1, M2: 1 seed"], fs=9.5)
     box(ax, 10.3, 3.7, 2.5, 1.9, "4. Model selection", ["best epoch by QWK", "on EyePACS-val", "DDR never used", "→ frozen checkpoint"],
         fc=GREEN, ec="#2E7D32", fs=9.5)
     for a, b in [(2.9, 3.6), (6.5, 7.2), (9.9, 10.3)]:
@@ -65,8 +65,8 @@ def g01():
     box(ax, 9.4, 0.5, 3.4, 2.3, "5. Final evaluation (once)", ["EyePACS-test (in-domain)", "DDR-test (out-of-domain, main)",
                                                               "once per frozen checkpoint"], fs=9.5)
     box(ax, 4.4, 0.5, 4.2, 2.3, "6. Metrics and analysis", ["QWK (primary) · macro-F1 · recall per grade", "AUC (referable DR) · ΔQWK = in − out",
-                                                         "bootstrap 95% CI · confusion matrix · ROC", "Grad-CAM · t-SNE by dataset"], fs=9.5)
-    box(ax, 0.2, 0.5, 3.4, 2.3, "7. Demo and report", ["Gradio web app (local CPU)", "upload → grade + probabilities", "+ Grad-CAM overlay", "LaTeX report (Overleaf)"], fc=ORANGE,
+                                                         "bootstrap 95% CI · confusion matrix · ROC", "Grad-CAM · t-SNE by dataset", "ordinal-decoding variant (val-fitted)"], fs=9.5)
+    box(ax, 0.2, 0.5, 3.4, 2.3, "7. Demo and report", ["Gradio web app (local CPU)", "upload → grade + probabilities", "+ Grad-CAM overlay", "LaTeX report (MiKTeX/Overleaf)"], fc=ORANGE,
         ec="#E65100", fs=9.5)
     arrow(ax, (11.55, 3.68), (11.1, 2.82))
     arrow(ax, (9.4, 1.65), (8.6, 1.65))
@@ -80,7 +80,7 @@ def g02():
     fig, ax = canvas(13, 7.4)
     ax.text(6.5, 7.2, "System design: where each component runs", ha="center", fontsize=14, fontweight="bold", color=DARK)
     # lanes
-    for (x, w, t) in [(0.1, 3.0, "DATA SOURCES"), (3.4, 5.6, "KAGGLE (cloud, no local GPU needed)"), (9.3, 3.6, "LOCAL MACHINE / OVERLEAF")]:
+    for (x, w, t) in [(0.1, 3.0, "DATA SOURCES"), (3.4, 5.6, "KAGGLE (cloud, no local GPU needed)"), (9.3, 3.6, "LOCAL MACHINE (CPU)")]:
         ax.add_patch(FancyBboxPatch((x, 0.2), w, 6.5, boxstyle="round,pad=0.02,rounding_size=0.1", fc="#FAFBFE", ec=GRAY, lw=1.2, ls="--"))
         ax.text(x + w / 2, 6.5, t, ha="center", va="top", fontsize=10.5, fontweight="bold", color=BLUE)
     box(ax, 0.3, 4.4, 2.6, 1.6, "EyePACS", ["Kaggle dataset", "(resized 2015 version)"], fs=9.5)
@@ -88,11 +88,11 @@ def g02():
     box(ax, 0.3, 0.5, 2.6, 1.5, "RETFound weights", ["natureCFP, private", "Kaggle dataset"], fs=9.5, fc=ORANGE, ec="#E65100")
     box(ax, 3.6, 4.5, 2.4, 1.5, "Preprocess kernel", ["CPU · crop, resize,", "cache, dHash"], fs=9.5)
     box(ax, 6.3, 4.5, 2.5, 1.5, "Package kernel", ["CPU · QA + tar files", "(few large files)"], fs=9.5)
-    box(ax, 3.6, 2.2, 5.2, 1.9, "Training kernel (GPU, 2 × T4)", ["one independent job per GPU", "B1 · B2 · M1 · M2, seeds 0–2", "logs (CSV/JSON) + curves + best checkpoint"], fc=GREEN, ec="#2E7D32", fs=9.5)
-    box(ax, 3.6, 0.5, 5.2, 1.3, "Evaluation kernel (GPU)", ["EyePACS-test, DDR-test · bootstrap · Grad-CAM · t-SNE"], fs=9.5)
-    box(ax, 9.5, 4.3, 3.2, 1.7, "Artifacts", ["checkpoints · logs/ ·", "evidence_figures/", "(downloaded via Kaggle CLI)"], fs=9.5)
+    box(ax, 3.6, 2.2, 5.2, 1.9, "Training kernel (GPU, 2 × T4)", ["one independent job per GPU · B1 · B2 · M1 · M2", "logs (CSV/JSON) + curves + best checkpoint", "final evaluation: logits + features on both test sets"], fc=GREEN, ec="#2E7D32", fs=9.5)
+    box(ax, 3.6, 0.5, 5.2, 1.3, "Saved outputs", ["best.pt · val logits · *_test.npz (per run)"], fs=9.5)
+    box(ax, 9.5, 4.3, 3.2, 1.7, "Analysis (local CPU)", ["bootstrap · ΔQWK · Grad-CAM · t-SNE", "evidence_figures/", "(outputs via Kaggle CLI)"], fs=9.5)
     box(ax, 9.5, 2.4, 3.2, 1.6, "Gradio demo", ["CPU inference", "grade · probabilities · Grad-CAM"], fc=ORANGE, ec="#E65100", fs=9.5)
-    box(ax, 9.5, 0.5, 3.2, 1.5, "LaTeX report", ["Overleaf (XeLaTeX + Biber)", "figures + BibTeX"], fs=9.5)
+    box(ax, 9.5, 0.5, 3.2, 1.5, "LaTeX report", ["MiKTeX (XeLaTeX + Biber)", "figures + BibTeX"], fs=9.5)
     arrow(ax, (2.9, 5.2), (3.6, 5.2))
     arrow(ax, (6.0, 5.25), (6.3, 5.25))
     arrow(ax, (7.55, 4.5), (6.5, 4.1))

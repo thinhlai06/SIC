@@ -71,13 +71,13 @@ Table~\ref{tab:hyperparameters} lists the settings of the fine-tuning recipe of 
         Base learning rate rule & $5\times10^{-3}\times B_{\text{eff}}/256$ & Linear scaling rule of the official RETFound fine-tuning code \\
         Layer-wise LR decay     & 0.65                    & Equation~\eqref{eq:llrd}, 24 transformer blocks \\
         Schedule                & Warm-up + cosine        & 1 warm-up epoch, final rate $10^{-6}$ (Equation~\eqref{eq:cosine}) \\
-        Physical / effective batch & 16 / 32              & Gradient accumulation of 2 steps (planned) \\
-        Epochs                  & about 10 (planned)      & Best epoch chosen by EyePACS-validation QWK \\
+        Physical / effective batch & 16 / 32              & Gradient accumulation of 2 steps \\
+        Epochs                  & 5 (8 for the budget check) & Best epoch chosen by EyePACS-validation QWK \\
         Loss                    & Cross-entropy           & Label smoothing 0.1 (Equation~\eqref{eq:ce}) \\
         Sampler                 & Square-root balanced    & Equation~\eqref{eq:sampler} \\
         Drop-path / grad. clip  & 0.2 / 1.0               & Regularisation and stability \\
         Precision               & AMP (fp16)              & Mixed precision on Tesla T4 \\
-        Seeds                   & 0, 1, 2 (planned)       & M1, M2, B1; one seed for B2 \\
+        Seeds                   & 0, 1, 2                 & B1; seed 0 only for B2, M1, M2 \\
         \bottomrule
     \end{tabularx}
 \end{table}

@@ -85,7 +85,7 @@ The measurable objectives are:
 
 \begin{enumerate}[leftmargin=1.8em]
     \item Build a reproducible pipeline that trains only on EyePACS and evaluates on EyePACS-test (in-domain) and DDR-test (out-of-domain), with every choice (checkpoint, hyper-parameters, augmentation strength) made on EyePACS-validation only.
-    \item Train and compare four models: B1 (ResNet-50, ImageNet), B2 (ViT-L, ImageNet MAE), M1 (RETFound) and M2 (RETFound with domain-shift augmentation), using three random seeds where the GPU budget allows.
+    \item Train and compare four models: B1 (ResNet-50, ImageNet), B2 (ViT-L, ImageNet MAE), M1 (RETFound) and M2 (RETFound with domain-shift augmentation), using three random seeds for the inexpensive ResNet-50 baseline and one seed for the ViT-L models because of the GPU budget.
     \item Report quadratic weighted kappa (primary), macro-F1, per-grade recall, referable-DR AUC and the in-to-out drop $\Delta$QWK, each with bootstrap 95\% confidence intervals.
     \item Explain the results with Grad-CAM and t-SNE, and deliver a local web demo for grading a single fundus image.
 \end{enumerate}
@@ -129,10 +129,10 @@ Table~\ref{tab:milestones} follows the ten-week programme schedule. The status c
         \textbf{Phase} & \textbf{Timeline} & \textbf{Key Deliverables / Activities} & \textbf{Status} \\
         \midrule
         1 & Weeks 1--2 & Topic selection, requirement analysis, and dataset acquisition (EyePACS, DDR, RETFound weights) & Completed \\
-        2 & Weeks 3--4 & Exploratory Data Analysis (EDA) and data preprocessing (cropping, resizing, duplicate check) & In Progress \\
-        3 & Weeks 5--7 & Model architecture design, baseline setup (B1, B2), and training of M1/M2 on Kaggle GPUs & Pending \\
-        4 & Weeks 8--9 & Evaluation on EyePACS-test and DDR-test, Grad-CAM/t-SNE analysis, UI integration, testing, and system optimization & Pending \\
-        5 & Week 10    & Final report submission and capstone presentation & Pending \\
+        2 & Weeks 3--4 & Exploratory Data Analysis (EDA) and data preprocessing (cropping, resizing, duplicate check) & Completed \\
+        3 & Weeks 5--7 & Model architecture design, baseline setup (B1, B2), and training of M1/M2 on Kaggle GPUs & Completed \\
+        4 & Weeks 8--9 & Evaluation on EyePACS-test and DDR-test, Grad-CAM/t-SNE analysis, UI integration, testing, and system optimization & Completed \\
+        5 & Week 10    & Final report submission and capstone presentation & Completed \\
         \bottomrule
     \end{tabularx}
 \end{table}

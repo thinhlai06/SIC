@@ -1,0 +1,31 @@
+\section{User Interface}
+\label{sec:user_interface}
+
+The demo application described in Section~\ref{subsec:demo_design} was implemented with Gradio and run with the M1 checkpoint (5 epochs, selected on EyePACS-validation) on the CPU of a laptop without a GPU. The code is in the \texttt{code/demo} folder of the project repository. The interface is in English and is intentionally simple: one page with an upload area, one button and the result panels.
+
+\subsection{Upload Page}
+\label{subsec:ui_upload}
+
+Figure~\ref{fig:demo_upload} shows the page when it is opened. The title and the first line state which model is used. The note ``Research prototype of the SIC capstone project -- not a medical device'' is always visible, because the model was trained on a public research dataset and has not been validated clinically. The user drags a colour fundus photograph into the image box (or uses the upload button, the webcam or the clipboard) and presses \emph{Grade image}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/u01_demo_upload.jpg}
+    \caption{Demo application before an image is uploaded: image input on the left, result panels (empty) on the right.}
+    \label{fig:demo_upload}
+\end{figure}
+
+\subsection{Prediction Page}
+\label{subsec:ui_result}
+
+Figure~\ref{fig:demo_result} shows the result for a DDR-test image of reference grade~3 (severe NPDR). The application crops and resizes the photograph exactly as in training and displays this $224\times224$ input so that the user can check what the model actually received. It then shows (i) the predicted grade (here ``3 -- Severe''), (ii) the probability of every grade as a bar chart (84\% for grade~3, 8\% for grade~2, 5\% for grade~4, 3\% for grade~1, 1\% for grade~0), (iii) the summed probability of referable DR, grade $\geq 2$ (96.1\%), with the recommendation ``refer to an ophthalmologist'' when it exceeds 50\%, and (iv) a Grad-CAM overlay in which the colour from blue to red marks how strongly each image region influenced the decision.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/u02_demo_result.jpg}
+    \caption{Demo application after grading a DDR-test image: predicted grade and referral hint (top right), class probabilities, the preprocessed input (bottom left) and the Grad-CAM overlay (bottom right).}
+    \label{fig:demo_result}
+\end{figure}
+
+Showing the probabilities and the referable-DR probability, instead of a single label, lets the user see when the model is uncertain, which is important for a screening aid. The Grad-CAM panel is a plausibility check, not a lesion detector (Section~\ref{subsec:interpretability}). On a laptop CPU the grading of one image, including the Grad-CAM computation, takes a few seconds.
+

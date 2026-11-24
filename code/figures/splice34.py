@@ -1,0 +1,7 @@
+s=open('code/figures/sec34.tex.txt',encoding='utf-8').read()
+s=s.replace("on the CPU of a laptop without a GPU","on the CPU of the local computer (no GPU)")
+s=s.replace("On a laptop CPU the grading of one image, including the Grad-CAM computation, takes a few seconds.","On the CPU of the local computer, one forward pass takes about 1.1 seconds and the grading with the Grad-CAM computation about 3 seconds (measured with a single random input).")
+c=open('Capstone-Project_latex/chapter03.tex',encoding='utf-8').read()
+a=c.index("\section{User Interface}"); b=c.index("\section{Testing and Improvements}")
+open('Capstone-Project_latex/chapter03.tex','w',encoding='utf-8').write(c[:a]+s.rstrip()+"\n\n"+c[b:])
+print('ok')
