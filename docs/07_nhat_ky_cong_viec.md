@@ -139,3 +139,24 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 - `code/eval/analyze.py`: tính QWK, macro-F1, AUC referable, recall từng mức, bootstrap CI 1000 lần (dùng chung mẫu lại để so sánh cặp), hình e01–e05, t-SNE a03/a04, và bảng LaTeX tự sinh từ `results.json` (tránh chép số tay). Kiểm thử bằng dữ liệu giả (không phải kết quả thật).
 - `code/demo/gradcam.py` và `app.py` (Gradio, giao diện tiếng Anh) kiểm thử với mô hình ngẫu nhiên nhỏ.
 - Benchmark `thinhlai/sic-dr-bench` đã đẩy lên Kaggle (M1 và B2 ViT-L song song trên 2 GPU, rồi B1), đang xếp hàng chờ GPU.
+
+---
+
+## Quyết định về huấn luyện (25/11, 00:50) — ghi ngắn, có lý do
+
+**Kết quả K1 (M1 và B2, 5 epoch, 1 seed, mỗi lần chạy 113 phút):**
+
+| Mô hình | QWK val (epoch 1→5) | QWK EyePACS-test | QWK DDR-test |
+|---|---|---|---|
+| M1 (RETFound) | 0,587 → 0,662 → 0,671 → 0,678 → **0,694** | 0,680 | 0,691 |
+| B2 (ViT-L ImageNet) | 0,533 → 0,607 → 0,638 → 0,658 → **0,668** | 0,654 | 0,722 |
+
+- **Nhận xét:** QWK val **còn tăng ở epoch 5** (M1 +0,016, B2 +0,010 ở epoch cuối), loss train vẫn giảm → 5 epoch **chưa hội tụ hoàn toàn**. Một epoch thực tế mất 21,3 phút (benchmark ước 18 phút).
+- **Quan sát đáng chú ý (không chỉnh, sẽ báo cáo trung thực):** B2 cao hơn M1 trên DDR (0,722 so với 0,691; chênh lệch cặp −0,031, khoảng tin cậy 95% [−0,051; −0,013]), nhưng M1 cao hơn B2 trên EyePACS-test (0,680 so với 0,654). Cả hai có QWK trên DDR không thấp hơn trong miền; nguyên nhân khả dĩ là phân bố mức bệnh khác nhau và nhãn DDR sạch hơn, nên tôi thêm chỉ số **ΔQWK khớp phân bố** (lấy mẫu EyePACS-test theo tỉ lệ mức bệnh của DDR) để loại yếu tố label shift: M1: +0,009 [−0,019; 0,036], B2: −0,061 [−0,088; −0,033].
+- t-SNE (kNN khác bộ dữ liệu): M1 0,03–0,06, B2 0,22–0,28 (0,5 là trộn hoàn toàn) → đặc trưng RETFound **tách hai bộ rõ hơn** B2, trái với giả thuyết "SSL võng mạc trộn miền hơn".
+
+**Quyết định (quy tắc đã báo: còn tăng dốc thì chạy thêm epoch, nhưng ưu tiên có bộ kết quả đầy đủ trước):**
+1. **K2 (đã đẩy lúc 00:50):** M2 seed 0 (5 epoch) song song B1 ba seed (5 epoch). *Lý do:* hoàn tất bộ so sánh 4 mô hình với **cùng ngân sách 5 epoch** (B2 so với M1 so với M2 công bằng), xong khoảng 02:50, nên có kết quả đầy đủ sớm, an toàn nếu sau này có sự cố.
+2. **K3 (tự đẩy khi K2 xong, xong khoảng 06:00):** M1 và B2 chạy **8 epoch** (seed 0). *Lý do:* kiểm tra xem kết luận (đặc biệt "B2 hơn M1 trên DDR") có đổi khi huấn luyện lâu hơn không, đúng mối lo "5 epoch quá thấp". 8 epoch (không phải 10) để còn đệm thời gian trước mốc 07:00–08:00.
+3. **Không chạy thêm seed ViT-L** (không đủ thời gian): độ tin cậy dựa trên bootstrap 95% CI; B1 có 3 seed. Sẽ nói rõ trong báo cáo.
+4. Linear probe đã bỏ.

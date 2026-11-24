@@ -10,6 +10,7 @@ ap.add_argument("--plan", required=True)
 ap.add_argument("--bs", type=int, default=16)
 ap.add_argument("--accum", type=int, default=2)
 ap.add_argument("--time-limit-min", type=int, default=0)
+ap.add_argument("--tag", default="", help="suffix for run names, e.g. _e8")
 ap.add_argument("--out", default="jobs_main.json")
 a = ap.parse_args()
 jobs = []
@@ -19,7 +20,7 @@ for lane in a.plan.split(";"):
     for it in items.split(","):
         m, seed = it.split(":")
         seed = int(seed)
-        base = dict(name=f"{m.lower()}_s{seed}", seed=seed, gpu=gpu, final_eval=True, save_ckpt=True,
+        base = dict(name=f"{m.lower()}_s{seed}{a.tag}", seed=seed, gpu=gpu, final_eval=True, save_ckpt=True,
                     time_limit_min=a.time_limit_min)
         if m in ("M1", "M2"):
             base.update(arch="retfound", pretrained_path="RETFound_mae_natureCFP.pth", epochs=a.vit_epochs,

@@ -2,32 +2,32 @@
 import json as _json
 JOBS = _json.loads(r'''[
  {
-  "name": "m1_s1",
-  "seed": 1,
+  "name": "m1_s0_e8",
+  "seed": 0,
   "gpu": 0,
   "final_eval": true,
   "save_ckpt": true,
-  "time_limit_min": 150,
+  "time_limit_min": 240,
   "arch": "retfound",
   "pretrained_path": "RETFound_mae_natureCFP.pth",
-  "epochs": 5,
+  "epochs": 8,
   "bs": 16,
   "accum": 2,
   "aug": "std"
  },
  {
-  "name": "m2_s1",
-  "seed": 1,
+  "name": "b2_s0_e8",
+  "seed": 0,
   "gpu": 1,
   "final_eval": true,
   "save_ckpt": true,
-  "time_limit_min": 150,
-  "arch": "retfound",
-  "pretrained_path": "RETFound_mae_natureCFP.pth",
-  "epochs": 5,
+  "time_limit_min": 240,
+  "arch": "vitl_mae_in",
+  "pretrained_path": "mae_pretrain_vit_large.pth",
+  "epochs": 8,
   "bs": 16,
   "accum": 2,
-  "aug": "dg"
+  "aug": "std"
  }
 ]''')
 

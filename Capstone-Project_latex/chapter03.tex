@@ -152,9 +152,37 @@ No result number is reported here yet: the models have not been trained at the t
 \section{Testing and Improvements}
 \label{sec:testing_improvements}
 
-% [PENDING: Section 3.5 is written after the evaluation. Planned content: ablation of the augmentation operations of M2 (1 seed), error analysis, robustness caveats, and the following limitations that are already known:
-%  - only one source and one target domain (conclusions apply to EyePACS -> DDR);
-%  - RETFound's pre-training included about 9.8% EyePACS images (without labels), so in-domain EyePACS-test results may be optimistic, while DDR was not part of it;
-%  - DDR grade 3 has only 71 test images (wide confidence intervals);
-%  - DDR colour statistics informed the motivation of the colour augmentation (Section 3.2.5);
-%  - single-source DG with augmentation only; no domain-invariant feature learning.]
+\subsection{Software and Pipeline Tests}
+\label{subsec:sw_tests}
+
+Because every GPU hour is scarce, the code was tested on the local CPU with synthetic data before it was sent to Kaggle. The training library was run end to end with a very small Vision Transformer on 60 generated images: data loading, the square-root sampler, the cosine schedule, validation, checkpointing, the final evaluation of the two test sets and the saving of logits and features all worked. The pre-trained weights of B1, B2 and M1 were loaded on the CPU, and the lists of missing and unexpected keys were checked: only the classification head and the final normalisation layer were newly initialised, as intended. The prediction function used in the final evaluation was compared with the ordinary forward pass of the network, for ResNet-50 and for a ViT, and the logits were identical. The analysis script (metrics, bootstrap, figures, t-SNE and the generated LaTeX tables) was tested on synthetic predictions with known structure; the same test exposed one error in our own test data, which had different labels for different models, and led us to add an automatic check that all runs of a test set use the same label order. A short benchmark on the real Kaggle GPUs (about 2.7 minutes) verified that the three model types train, validate and save correctly, and measured speed and memory (Section~\ref{subsec:finetune}).
+
+\subsection{Data Validation Tests}
+\label{subsec:data_tests}
+
+The label files were checked against the published sizes, patient identifiers were checked for leakage across splits, every cached image was checked for existence and size, and the EyePACS--DDR duplicate check described in Section~\ref{subsec:prep_dup} was validated with a self-test in which artificially degraded copies of DDR images had to be found again.
+
+\subsection{Problems Found and Improvements Made}
+\label{subsec:improvements}
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Duplicate check.} The first version, a 64-bit hash, flagged 94\% of the DDR images as ``near-duplicates''. It was replaced by a correlation test of a vessel-sensitive descriptor with a self-test (Section~\ref{subsec:prep_dup}); the new test found no duplicate.
+    \item \textbf{Slow packaging of 92{,}000 small files.} Downloading the cache file by file hit the rate limit of the Kaggle interface, so the cache was repacked into four archive files; this also made the test sets separable from the training data.
+    \item \textbf{Report build.} The first compile on the free Overleaf plan exceeded its time limit; the figures were compressed, two layout warnings were fixed, and the report is now built locally with MiKTeX.
+    \item \textbf{GPU scheduling.} Kaggle allows only one of our two-GPU sessions at a time, so the runs are executed in sequence, with one model per GPU inside each session.
+\end{itemize}
+
+% [PENDING: 3.5.4 Ablation and error analysis after the evaluation: error analysis of wrong cases (Grad-CAM, a01), and any additional robustness analysis that time permits]
+
+\subsection{Limitations}
+\label{subsec:limitations}
+
+The following limitations apply to all conclusions of this report.
+\begin{itemize}[leftmargin=1.5em]
+    \item Only one source domain (EyePACS) and one target domain (DDR) were used, so the findings concern the transfer EyePACS $\rightarrow$ DDR and should not be generalised to other hospitals or cameras.
+    \item RETFound's pre-training included about 9.8\% EyePACS images (without labels), so in-domain EyePACS-test scores of M1 and M2 may be optimistic; DDR was not part of the pre-training.
+    \item DDR grade~3 has only 71 test images, so its recall and F1 have wide confidence intervals.
+    \item The DDR colour statistics were inspected during the EDA, so the \emph{motivation} for the colour augmentation of M2 was informed by the target domain (the augmentation ranges themselves are generic and were not tuned on DDR).
+    \item Domain generalization is limited to data augmentation; no domain-invariant feature learning was attempted.
+\end{itemize}
+% [PENDING: add the limitation about training budget (epochs, seeds) after the first results show whether the validation QWK had plateaued]

@@ -138,6 +138,36 @@ for x, y_ in pairs:
     dy = np.array(boot["eyepacs_test"][y_]["qwk"]) - np.array(boot["ddr_test"][y_]["qwk"])
     d = dx - dy
     out["paired_diff_delta_qwk"][f"{x}-{y_}"] = dict(mean=float(d.mean()), ci95=[float(np.percentile(d, 2.5)), float(np.percentile(d, 97.5))])
+# ---- prior-matched in-domain QWK: EyePACS-test is resampled (stratified, with replacement) to the DDR grade proportions,
+# so that the grade distribution is identical in both test sets; this removes the label-shift confound of DeltaQWK.
+ddr_counts = np.bincount(base["ddr_test"][MODELS[0]][1], minlength=K)
+ye = base["eyepacs_test"][MODELS[0]][1]
+cls_idx = [np.where(ye == c)[0] for c in range(K)]
+PE = {m: base["eyepacs_test"][m][0].argmax(1) for m in MODELS}
+rng2 = np.random.RandomState(777)
+pm = {m: [] for m in MODELS}
+for b in range(a.boot):
+    idx = np.concatenate([rng2.choice(cls_idx[c], int(ddr_counts[c]), replace=True) for c in range(K)])
+    for m in MODELS:
+        pm[m].append(qwk(ye[idx], PE[m][idx]))
+for m in MODELS:
+    v = np.array(pm[m])
+    dd = v - np.array(boot["ddr_test"][m]["qwk"])
+    out["models"][m]["qwk_eyepacs_prior_matched"] = dict(mean=float(v.mean()), ci95=[float(np.percentile(v, 2.5)), float(np.percentile(v, 97.5))])
+    out["models"][m]["delta_qwk_prior_matched"] = dict(mean=float(dd.mean()), ci95=[float(np.percentile(dd, 2.5)), float(np.percentile(dd, 97.5))])
+out["paired_diff_delta_qwk_matched"] = {}
+for x, y_ in pairs:
+    d = (np.array(pm[x]) - np.array(boot["ddr_test"][x]["qwk"])) - (np.array(pm[y_]) - np.array(boot["ddr_test"][y_]["qwk"]))
+    out["paired_diff_delta_qwk_matched"][f"{x}-{y_}"] = dict(mean=float(d.mean()), ci95=[float(np.percentile(d, 2.5)), float(np.percentile(d, 97.5))])
+T = ["% Auto-generated", "\\begin{tabularx}{\\textwidth}{l c c c}", "\\toprule",
+     "\\textbf{Model} & \\textbf{QWK EyePACS-test (DDR grade mix)} & \\textbf{QWK DDR-test} & $\\boldsymbol{\\Delta}$\\textbf{QWK (matched)} \\\\", "\\midrule"]
+for m in MODELS:
+    r = out["models"][m]
+    a1, a2 = r["qwk_eyepacs_prior_matched"], r["delta_qwk_prior_matched"]
+    T.append(f"{m} & {a1['mean']:.3f} [{a1['ci95'][0]:.3f}, {a1['ci95'][1]:.3f}] & {r['ddr_test']['qwk']['per_seed'][0]:.3f} [{r['ddr_test']['qwk']['ci95_seed0'][0]:.3f}, {r['ddr_test']['qwk']['ci95_seed0'][1]:.3f}] & {a2['mean']:.3f} [{a2['ci95'][0]:.3f}, {a2['ci95'][1]:.3f}] \\\\")
+T += ["\\bottomrule", "\\end{tabularx}"]
+open(os.path.join(a.out, "table_matched.tex"), "w").write("\n".join(T))
+
 json.dump(out, open(os.path.join(a.out, "results.json"), "w"), indent=2)
 
 # ---------------------------------------------------------------- figures
