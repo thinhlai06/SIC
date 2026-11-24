@@ -1,0 +1,34 @@
+{
+  "manifest_rows": 92461,
+  "per_split": {
+    "eyepacs_test": 42670,
+    "eyepacs_train": 35126,
+    "eyepacs_val": 10906,
+    "ddr_test": 3759
+  },
+  "errors": 0,
+  "fallback_whole_image": {
+    "ddr_test": 0,
+    "eyepacs_test": 3,
+    "eyepacs_train": 4,
+    "eyepacs_val": 1
+  },
+  "missing_files": {
+    "eyepacs_train": 0,
+    "eyepacs_val": 0,
+    "eyepacs_test": 0,
+    "ddr_test": 0
+  },
+  "bad_size_in_sample": {
+    "eyepacs_train": 0,
+    "eyepacs_val": 0,
+    "eyepacs_test": 0,
+    "ddr_test": 0
+  },
+  "tar_mb": {
+    "eyepacs_train": 681.6,
+    "eyepacs_val": 211.8,
+    "eyepacs_test": 829.5,
+    "ddr_test": 79.1
+  }
+}

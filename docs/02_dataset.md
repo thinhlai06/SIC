@@ -85,3 +85,10 @@ Số liệu thô: `logs/probe_report.json`; hình: `evidence_figures/01_data/d01
 - **Phân bố lớp:** giống hệt kết quả phân tích nhãn (lớp 0 khoảng 74% ở EyePACS, DDR-test khoảng 50% lớp 0 và 36% lớp 2).
 
 Các hình EDA sẽ được lưu vào `evidence_figures/01_data/` (phân bố lớp, kích thước ảnh, ảnh mẫu mỗi mức, thống kê màu/độ sáng trung bình để thấy khoảng cách miền).
+
+### Kết quả tiền xử lý và kiểm tra ảnh trùng (GĐ1, đã chạy xong)
+
+Số liệu thô: `logs/qa_report.json`, `logs/preprocess_report.json`, `logs/dup_check_report.json`; hình: `evidence_figures/02_preprocessing/`.
+
+- **Tiền xử lý:** 92.461 ảnh (35.126 + 10.906 + 42.670 EyePACS, 3.759 DDR) xử lý xong trong khoảng 53 phút trên CPU Kaggle; **0 lỗi đọc, 0 file thiếu, 0 ảnh sai kích thước (kiểm tra mẫu)**; cắt viền phải quay về dùng cả ảnh với **8/92.461** ảnh (EyePACS: 4 train, 1 val, 3 test; DDR: 0).
+- **Kiểm tra ảnh trùng EyePACS ↔ DDR:** bước 1 (dHash 64 bit) đánh dấu 94% ảnh DDR là "gần trùng" → **không đáng tin** vì hash 9×8 quá thô (mọi ảnh võng mạc đều là đĩa sáng trên nền đen). Bước 2 (tương quan chuẩn hóa của bộ mô tả mạch máu/tổn thương 64×64): bản sao bị làm hỏng (resize, JPEG 60, sáng +15%) đạt NCC 0,978–1,0; ảnh DDR thật có NCC tốt nhất với EyePACS tối đa **0,974** (trung vị 0,80), nghĩa là **không có ảnh trùng**. 6 cặp giống nhất đã xem bằng mắt: đều là võng mạc khác nhau. Hạn chế: không phát hiện bản sao bị xoay/lật/cắt.

@@ -114,3 +114,10 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 
 ### Còn chờ (phụ thuộc kernel đóng gói)
 - Mục 3.1: kết quả QA, hình trước/sau cắt viền, kết quả kiểm tra ảnh trùng dHash (đang là `% [PENDING]`).
+
+### GĐ1 hoàn tất (2026-11-24 21:21)
+- Kernel `sic-dr-package` chạy khoảng 2 giờ 36 phút (đọc lại 92.000 file nhỏ rất chậm), kết thúc COMPLETE. Tải về `logs/_pkg/` (4 file tar khoảng 1,8 GB + báo cáo; thư mục này bị `.gitignore`); báo cáo và hình đã chép vào `logs/` và `evidence_figures/02_preprocessing/`.
+- Kết quả QA và kiểm tra trùng: xem `docs/02_dataset.md` (mục "Kết quả tiền xử lý và kiểm tra ảnh trùng").
+- Bước dHash trên Kaggle cho kết quả gây hiểu lầm (94% "gần trùng"); đã viết `code/preprocess/dup_check_local.py` chạy trên máy (CPU, đọc trực tiếp các file tar) để kiểm tra lại bằng bộ mô tả chặt hơn, có tự kiểm chứng bằng bản sao bị làm hỏng. Kết luận: không có ảnh trùng.
+- Overleaf: bản nháp biên dịch báo "hết thời gian" (0 lỗi, 3 cảnh báo). Đã giảm ảnh `d03` (3,1 MB → 217 KB, đổi sang JPG), sửa bảng `tab:experiments` (cảnh báo tabularx), bỏ chữ đậm trong listing (cảnh báo font). Nguyên nhân chính khả dĩ: lần biên dịch đầu của XeLaTeX phải dựng cache font; gói miễn phí giới hạn thời gian.
+- Báo cáo: đã điền kết quả GĐ1 vào mục 3.1 (kết quả tiền xử lý, hình trước/sau cắt viền, kiểm tra trùng).

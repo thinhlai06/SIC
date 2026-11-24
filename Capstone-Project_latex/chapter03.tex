@@ -21,18 +21,45 @@ For each image the following steps are performed (executed on Kaggle CPU kernels
     \item \textbf{Resizing.} The square image is resized to $224\times224$ with Lanczos interpolation.
     \item \textbf{Cache.} The result is stored as a JPEG of quality 95 without chroma subsampling, so that all later experiments read small files instead of the original images (about 89\,GB for EyePACS).
     \item \textbf{Normalisation at load time.} Pixel values are scaled to $[0,1]$ and normalised with the ImageNet mean and standard deviation, as in the official RETFound fine-tuning code.
-    \item \textbf{Duplicate check.} A 64-bit difference hash (dHash) of every $224\times224$ image is computed, and every DDR test image is compared with all EyePACS images by Hamming distance to detect near-duplicates that would leak between the source and target domains.
+    \item \textbf{Duplicate check.} Near-duplicates between EyePACS and DDR would leak information from the source to the target domain, so every DDR test image is compared with all 88{,}702 EyePACS images. A coarse 64-bit difference hash (dHash) is computed first, followed by a stricter correlation test of a vessel-sensitive image descriptor (Section~\ref{subsec:prep_dup}).
 \end{enumerate}
 
 The cropping step matters because of the framing gap documented in Section~\ref{subsec:eda_domain_gap}: in DDR the retina occupies only about half of the image area, so without cropping the DDR retina would be much smaller than the EyePACS retina after resizing.
 
-\subsection{Quality Checks}
+\subsection{Quality Checks and Preprocessing Result}
 \label{subsec:prep_qa}
 
-A packaging step verifies the cache: that every image listed in the manifest exists, that the image size is $224\times224$ (checked on a sample of about 300 images per split), and that no image failed to open; the number of images for which the cropping fell back to the whole image is also reported.
-% [PENDING: insert the results of the QA report (logs/qa_report.json): number of missing files, size check, number of fallback images, processing time]
-% [PENDING: insert Figure p01_before_after_crop.png (before/after cropping, EyePACS and DDR) with a description paragraph]
-% [PENDING: insert the dHash duplicate-check result (p02_phash_check): number of DDR images with an EyePACS near-duplicate at Hamming distance <= threshold, and the example figure]
+A packaging step verifies the cache: that every image listed in the manifest exists, that the image size is $224\times224$ (checked on a sample of about 300 images per split), and that no image failed to open; the number of images for which the cropping fell back to the whole image is also reported. All 92{,}461 images (35{,}126 + 10{,}906 + 42{,}670 EyePACS and 3{,}759 DDR) were processed in about 53 minutes on Kaggle CPU kernels, with \textbf{0 read errors, 0 missing cache files and 0 images with a wrong size} in the checked samples. The cropping fell back to the whole image for only \textbf{8 of the 92{,}461 images} (4 in EyePACS-train, 1 in EyePACS-validation, 3 in EyePACS-test, none in DDR), so the retina detector worked on 99.99\% of the images. The cache occupies 681.6\,MB (train), 211.8\,MB (validation), 829.5\,MB (EyePACS-test) and 79.1\,MB (DDR-test), against about 89\,GB of original EyePACS images.
+
+Figure~\ref{fig:before_after} shows the effect on six EyePACS and six DDR images. In EyePACS the black border is already narrow, so the change is small, and the shape of the retina is preserved. In DDR the large black margins are removed and the retina fills the square, so that the optic disc, macula and vessels occupy a similar share of the input in both datasets. Elliptical DDR retinas stay elliptical, because the padding is applied after cropping and never stretches the image.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/p01_before_after_crop.jpg}
+    \caption{Preprocessing examples. For each dataset the first row shows the original image (with its size) and the second row the cropped, square-padded $224\times224$ result. Top two rows: EyePACS. Bottom two rows: DDR.}
+    \label{fig:before_after}
+\end{figure}
+
+\subsection{Duplicate Check Between EyePACS and DDR}
+\label{subsec:prep_dup}
+
+The check has two stages, and the first one turned out to be too coarse. The 64-bit dHash (a $9\times8$ grayscale thumbnail) flagged 3{,}537 of the 3{,}759 DDR images (94\%) as being within 4 bits of some EyePACS image, 2{,}168 of them at distance 0. This does not mean that the datasets overlap: at this resolution all fundus photographs look alike, a bright disc on a black background, so the hash cannot tell different retinas apart. We therefore discarded the dHash as evidence and added a stricter test.
+
+In the second stage each $224\times224$ image is converted to a $64\times64$ grayscale image, a Gaussian-blurred copy is subtracted so that mainly vessels and lesions remain, and the result is normalised to zero mean and unit length. Two images are compared by their normalised cross-correlation (NCC), which is 1 for identical content. To know which NCC values a true duplicate reaches, we ran a self-test: 300 randomly chosen DDR images were degraded (rescaled, JPEG quality 60, 15\% brighter), and each was compared with its original. The NCC of these copies was between 0.978 and 1.0 (median 0.995). The real DDR images, in contrast, reach a best NCC with any EyePACS image of only 0.80 on median, with a \textbf{maximum of 0.974}, which is below the \emph{lowest} value of the self-test copies (Figure~\ref{fig:dup_hist}). The six DDR images with the highest NCC were inspected visually (Figure~\ref{fig:dup_pairs}); in all six cases the most similar EyePACS image is a different retina that merely resembles the DDR image in framing and colour. We conclude that \textbf{no DDR test image has a near-duplicate in EyePACS} under re-compression, rescaling and brightness changes. The test is not designed to detect copies that were rotated, flipped or cropped; since the two datasets come from different countries and years and were released independently, we consider such copies unlikely, but this is a stated limitation.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.78\textwidth]{figures/p03_dup_ncc_hist.png}
+    \caption{Duplicate check. Blue: for each of the 3{,}759 DDR test images, the highest NCC with any EyePACS image. Orange: NCC between 300 artificially degraded DDR images and their originals (self-test). The two distributions do not overlap.}
+    \label{fig:dup_hist}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/p04_dup_top_pairs.jpg}
+    \caption{The six DDR images (top) with the highest correlation to an EyePACS image (bottom) are different retinas, not duplicates.}
+    \label{fig:dup_pairs}
+\end{figure}
 
 \subsection{Augmentation During Training}
 \label{subsec:prep_aug}
@@ -68,7 +95,7 @@ Figure~\ref{fig:samples} shows randomly chosen images of every grade from EyePAC
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.92\textwidth]{figures/d03_samples_per_grade.png}
+    \includegraphics[width=0.92\textwidth]{figures/d03_samples_per_grade.jpg}
     \caption{Random samples per ICDR grade (columns 0--4). Top three rows: EyePACS. Bottom three rows: DDR. The two domains differ in framing (circular and tight vs. elliptical with black margins) and in colour.}
     \label{fig:samples}
 \end{figure}

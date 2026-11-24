@@ -1,0 +1,14 @@
+{
+  "n_ddr": 3759,
+  "n_eyepacs": 88702,
+  "ncc_max": 0.9737824201583862,
+  "ncc_p99": 0.9469782114028931,
+  "ncc_median": 0.7988345623016357,
+  "ddr_with_ncc_ge_0_95": 29,
+  "ddr_with_ncc_ge_0_90": 235,
+  "ddr_with_ncc_ge_0_80": 1862,
+  "selftest_perturbed_vs_original_min": 0.9784706830978394,
+  "selftest_perturbed_vs_original_median": 0.9946497082710266,
+  "selftest_best_other_ddr_median": 0.9148666858673096,
+  "threshold": 0.95
+}

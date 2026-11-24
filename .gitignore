@@ -38,3 +38,9 @@ data/
 
 # Hugging Face token
 hf_token.txt
+
+# Local bulk data (re-creatable from Kaggle outputs)
+*.tar
+logs/_pkg/
+logs/_dup/
+logs/_pre/*
