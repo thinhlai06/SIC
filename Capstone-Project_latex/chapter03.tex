@@ -1,0 +1,83 @@
+\chapter{Results}
+\label{chap:results}
+
+\section{Data Preprocessing}
+\label{sec:data_preprocessing}
+
+% [TODO: Detail data cleaning, missing value imputation, normalization, tokenization, augmentation, etc.]
+
+\section{Exploratory Data Analysis (EDA)}
+\label{sec:eda}
+
+% [TODO: Insert data visualization, distributions, correlation matrices, and analytical findings]
+
+\begin{figure}[htbp]
+    \centering
+    \setlength{\fboxrule}{0.8pt}%
+    \setlength{\fboxsep}{14pt}%
+    \fcolorbox{SamsungGray}{white}{%
+        \parbox{0.85\textwidth}{%
+            \centering\vspace{0.9cm}
+            \sffamily\color{SamsungDarkGray}
+            {\large\bfseries [Exploratory Data Analysis Plots]}\par
+            \vspace{0.3cm}
+            \footnotesize Replace this box with: \texttt{\textbackslash includegraphics[width=0.85\textbackslash textwidth]\{figures/eda\_plots.png\}}\par
+            \vspace{0.9cm}
+        }%
+    }
+    \caption{Exploratory Data Analysis: Feature Distributions and Correlations}
+    \label{fig:eda_results}
+\end{figure}
+
+\section{Modeling}
+\label{sec:modeling}
+
+% [TODO: Describe model architectures, baselines, hyperparameters, and quantitative comparative benchmarks]
+
+\begin{table}[htbp]
+    \centering
+    \caption{Model Evaluation and Comparative Performance Benchmarks}
+    \label{tab:model_results}
+    \begin{tabularx}{\textwidth}{p{5.5cm} X X X X}
+        \toprule
+        \textbf{Model Architecture} & \centering\textbf{Accuracy (\%)} & \centering\textbf{Precision (\%)} & \centering\textbf{Recall (\%)} & \centering\arraybackslash\textbf{F1-Score (\%)} \\
+        \midrule
+        Baseline Linear Model       & \centering 82.4 & \centering 81.0 & \centering 80.5 & \centering\arraybackslash 80.7 \\
+        Iterative Architecture A    & \centering 88.6 & \centering 87.9 & \centering 88.2 & \centering\arraybackslash 88.0 \\
+        Proposed Deep Architecture  & \centering\textbf{94.8} & \centering\textbf{94.5} & \centering\textbf{95.1} & \centering\arraybackslash\textbf{94.8} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\begin{equation}
+    \text{F1-Score} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+    \label{eq:f1_score}
+\end{equation}
+
+\section{User Interface}
+\label{sec:user_interface}
+
+% [TODO: Showcase user application interface, web/mobile dashboard screenshots, and user interaction flows]
+
+\begin{figure}[htbp]
+    \centering
+    \setlength{\fboxrule}{0.8pt}%
+    \setlength{\fboxsep}{14pt}%
+    \fcolorbox{SamsungGray}{white}{%
+        \parbox{0.85\textwidth}{%
+            \centering\vspace{0.9cm}
+            \sffamily\color{SamsungDarkGray}
+            {\large\bfseries [Application User Interface Screenshot]}\par
+            \vspace{0.3cm}
+            \footnotesize Replace this box with: \texttt{\textbackslash includegraphics[width=0.85\textbackslash textwidth]\{figures/ui\_screenshot.png\}}\par
+            \vspace{0.9cm}
+        }%
+    }
+    \caption{Interactive User Interface Dashboard}
+    \label{fig:ui_dashboard}
+\end{figure}
+
+\section{Testing and Improvements}
+\label{sec:testing_improvements}
+
+% [TODO: Outline testing protocols, edge case analyses, ablation experiments, and iterative improvements made]

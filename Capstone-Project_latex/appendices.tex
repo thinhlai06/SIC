@@ -1,0 +1,56 @@
+\appendix
+\chapter{Source Code and Implementation Details}
+\label{app:code}
+
+This appendix provides key excerpts of the core model pipeline implementation.
+
+\begin{lstlisting}[language=Python, caption={Core Training Loop and Metric Evaluation Pipeline}, label={lst:training_loop}]
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+
+def train_one_epoch(model: nn.Module, 
+                    dataloader: DataLoader, 
+                    optimizer: torch.optim.Optimizer, 
+                    criterion: nn.Module, 
+                    device: torch.device) -> float:
+    """
+    Executes a single epoch pass over the training dataset.
+    """
+    model.train()
+    running_loss = 0.0
+    for batch_idx, (inputs, targets) in enumerate(dataloader):
+        inputs, targets = inputs.to(device), targets.to(device)
+        
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+        loss.backward()
+        optimizer.step()
+        
+        running_loss += loss.item() * inputs.size(0)
+        
+    epoch_loss = running_loss / len(dataloader.dataset)
+    return epoch_loss
+\end{lstlisting}
+
+\chapter{Hyperparameter Configurations}
+\label{app:hyperparameters}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Detailed Experimental Hyperparameter Settings}
+    \label{tab:hyperparameters}
+    \begin{tabularx}{\textwidth}{l l X}
+        \toprule
+        \textbf{Hyperparameter} & \textbf{Selected Value} & \textbf{Description / Search Space} \\
+        \midrule
+        Base Learning Rate      & $1 \times 10^{-4}$      & Cosine Annealing scheduler with warm restart \\
+        Batch Size              & 32                      & Optimized for GPU memory throughput \\
+        Optimizer               & AdamW                   & $\beta_1 = 0.9, \beta_2 = 0.999, \text{weight\_decay} = 0.01$ \\
+        Training Epochs         & 100                     & Early stopping with patience of 10 epochs \\
+        Input Resolution        & $224 \times 224$        & Standard input tensor dimensions \\
+        Loss Function           & Cross-Entropy           & Label smoothing $\alpha = 0.1$ \\
+        \bottomrule
+    \end{tabularx}
+\end{table}

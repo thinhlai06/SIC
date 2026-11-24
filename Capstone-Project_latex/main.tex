@@ -1,0 +1,95 @@
+% ==============================================================================
+% SAMSUNG INNOVATION CAMPUS - AI COURSE
+% CAPSTONE PROJECT FINAL REPORT
+% ==============================================================================
+% Main Document File
+% Compiler: XeLaTeX / LuaLaTeX
+% Bibliography backend: Biber (IEEE style)
+% ==============================================================================
+
+\documentclass{sicaireport}
+
+% Load Metadata Configuration
+\input{metadata}
+
+% Load Additional Preamble & Package Settings
+\input{preamble}
+
+\begin{document}
+
+% ------------------------------------------------------------------------------
+% 1. COVER PAGE & TITLE PAGE
+% ------------------------------------------------------------------------------
+\makecoverpage
+\maketitledetailpage
+
+% ------------------------------------------------------------------------------
+% 2. FRONT MATTER
+% ------------------------------------------------------------------------------
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+% Table of Contents
+\renewcommand{\contentsname}{Content}
+\tableofcontents
+\clearpage
+
+% List of Figures
+\listoffigures
+\clearpage
+
+% List of Tables
+\listoftables
+\clearpage
+
+% List of Abbreviations (Structural Template)
+\chapter*{List of Abbreviations}
+\addcontentsline{toc}{chapter}{List of Abbreviations}
+\begin{table}[htbp]
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabularx}{\textwidth}{p{3.5cm} X}
+        \toprule
+        \textbf{Abbreviation} & \textbf{Full Definition / Description} \\
+        \midrule
+        \textbf{AI}           & Artificial Intelligence \\
+        \textbf{SIC}          & Samsung Innovation Campus \\
+        \textbf{EDA}          & Exploratory Data Analysis \\
+        \textbf{ML}           & Machine Learning \\
+        \textbf{DL}           & Deep Learning \\
+        \textbf{CNN}          & Convolutional Neural Network \\
+        \textbf{RNN}          & Recurrent Neural Network \\
+        \textbf{NLP}          & Natural Language Processing \\
+        \textbf{API}          & Application Programming Interface \\
+        \textbf{UI}           & User Interface \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+\clearpage
+
+% ------------------------------------------------------------------------------
+% 3. MAIN MATTER
+% ------------------------------------------------------------------------------
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\input{chapter01}
+\input{chapter02}
+\input{chapter03}
+\input{chapter04}
+\input{chapter05}
+\input{chapter06}
+
+% ------------------------------------------------------------------------------
+% 4. BIBLIOGRAPHY (IEEE Reference Style via BibLaTeX/Biber)
+% ------------------------------------------------------------------------------
+\clearpage
+\nocite{*} % Show example entries in references.bib
+\printbibliography[heading=bibintoc,title={References}]
+
+% ------------------------------------------------------------------------------
+% 5. APPENDICES
+% ------------------------------------------------------------------------------
+\clearpage
+\input{appendices}
+
+\end{document}

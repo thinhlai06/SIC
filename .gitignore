@@ -1,0 +1,37 @@
+# Secrets, never commit
+apikey_kaggle.txt
+*.token
+.env
+access_token
+
+# Third-party document of another group (not ours to publish)
+Group3_SIC_AI_N02-signed.pdf
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.bbl
+*.bcf
+*.blg
+*.lof
+*.lot
+*.out
+*.toc
+*.run.xml
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# Python / notebooks
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Large model/data files
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.npy
+*.npz
+data/
