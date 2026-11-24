@@ -1,0 +1,8 @@
+[
+ {"name": "bench_m1", "arch": "retfound", "pretrained_path": "RETFound_mae_natureCFP.pth", "bs": 16, "accum": 2,
+  "epochs": 1, "max_steps": 40, "val_max": 800, "save_ckpt": false, "aug": "std", "gpu": 0, "aug_figure": true},
+ {"name": "bench_b2", "arch": "vitl_mae_in", "pretrained_path": "mae_pretrain_vit_large.pth", "bs": 8, "accum": 4,
+  "epochs": 1, "max_steps": 40, "val_max": 800, "save_ckpt": false, "aug": "std", "gpu": 1},
+ {"name": "bench_b1", "arch": "resnet50", "pretrained_path": "resnet50_tv_in1k.safetensors", "bs": 32, "accum": 1,
+  "blr": null, "lr": 0.0001, "epochs": 1, "max_steps": 60, "val_max": 800, "save_ckpt": false, "aug": "std", "gpu": 1}
+]

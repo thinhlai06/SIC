@@ -2,9 +2,10 @@
 
 Design rules
   * Trains on EyePACS-train, selects the checkpoint on EyePACS-val ONLY (by QWK).
-  * This script NEVER loads EyePACS-test or DDR. Those are evaluated once, later, by eval scripts.
-  * Up to 2 jobs run in parallel, one per GPU (separate processes), to double throughput per
-    Kaggle GPU-hour.
+  * EyePACS-test and DDR-test are touched ONLY by final_eval(), once per run, AFTER the best
+    checkpoint (by EyePACS-val QWK) is frozen; nothing is ever selected on them.
+  * Jobs are queued per GPU (separate processes, one GPU each): 2 queues run in parallel to double
+    throughput per Kaggle GPU-hour.
 """
 import glob
 import io
@@ -34,6 +35,7 @@ DEFAULTS = dict(
     num_workers=2, pretrained_path="",
     max_steps=0, val_max=0,           # benchmark controls (0 = off)
     time_limit_min=0, grad_ckpt=False, aug_figure=False, save_ckpt=True,
+    final_eval=False, gpu=None,
 )
 
 
@@ -133,10 +135,20 @@ class DS:
 
 
 # ---------------------------------------------------------------------------- model
+def resolve_path(p):
+    """Kaggle mounts datasets under varying prefixes: search by basename if the path does not exist."""
+    if not p or os.path.exists(p):
+        return p
+    hits = glob.glob("/kaggle/input/**/" + os.path.basename(p), recursive=True)
+    assert hits, f"pretrained file not found: {p}"
+    return sorted(hits)[0]
+
+
 def build_model(cfg):
     import timm
     import torch
     arch = cfg["arch"]
+    cfg = {**cfg, "pretrained_path": resolve_path(cfg["pretrained_path"])}
     if arch == "vit_tiny_test":          # only for CPU unit tests of the pipeline
         return timm.create_model("vit_tiny_patch16_224", pretrained=False, num_classes=5, global_pool="avg",
                                  drop_path_rate=cfg["drop_path"], img_size=224)
@@ -215,6 +227,66 @@ def evaluate(model, loader, device, crit):
     m = metrics(y, logits.argmax(1))
     m["loss"] = tot / len(y)
     return m, logits, y
+
+
+# --------------------------------------------------------------------------- final eval
+def prepare_test():
+    """Extract the two test tars once (lock file: two parallel jobs may call this)."""
+    flag, lock = os.path.join(DATA, "READY_TEST"), os.path.join(DATA, "LOCK_TEST")
+    if os.path.exists(flag):
+        return
+    try:
+        os.close(os.open(lock, os.O_CREAT | os.O_EXCL))
+        owner = True
+    except FileExistsError:
+        owner = False
+    if owner:
+        for sp in ["eyepacs_test", "ddr_test"]:
+            t = find_one(f"/kaggle/input/**/{sp}.tar")
+            assert t, f"missing {sp}.tar"
+            log("extract (final eval)", t)
+            with tarfile.open(t) as tf:
+                tf.extractall(DATA)
+        open(flag, "w").write("ok")
+    else:
+        while not os.path.exists(flag):
+            time.sleep(5)
+
+
+def predict(model, loader, device):
+    """logits, pooled pre-classifier features, labels."""
+    import torch
+    model.eval()
+    clf = model.get_classifier()
+    L, F, Y = [], [], []
+    with torch.no_grad(), torch.autocast("cuda", dtype=torch.float16, enabled=device.type == "cuda"):
+        for x, y in loader:
+            f = model.forward_head(model.forward_features(x.to(device, non_blocking=True)), pre_logits=True)
+            L.append(clf(f).float().cpu())
+            F.append(f.float().cpu().half())
+            Y.append(y)
+    return torch.cat(L).numpy(), torch.cat(F).numpy(), torch.cat(Y).numpy()
+
+
+def final_eval(model, ckpt_path, name, cfg, device):
+    """Run ONCE on the frozen best checkpoint (chosen on EyePACS-val). Saves logits + features; metrics are logged only."""
+    import torch
+    from torch.utils.data import DataLoader
+    prepare_test()
+    sd = torch.load(ckpt_path, map_location="cpu")
+    model.load_state_dict(sd)
+    out = {}
+    for sp in ["eyepacs_test", "ddr_test"]:
+        items = load_items(sp)
+        dl = DataLoader(DS(items, build_transforms("eval")), batch_size=64, shuffle=False,
+                        num_workers=cfg["num_workers"], pin_memory=True)
+        t = time.time()
+        lg, ft, y = predict(model, dl, device)
+        np.savez_compressed(f"{WORK}/{name}_{sp}.npz", logits=lg, feats=ft, y=y)
+        m = metrics(y, lg.argmax(1))
+        out[sp] = m
+        log(name, "FINAL-EVAL", sp, len(y), "images", f"{time.time() - t:.0f}s", json.dumps(m))
+    return out
 
 
 # ----------------------------------------------------------------------------- run
@@ -315,8 +387,14 @@ def run(cfg):
         if cfg["time_limit_min"] and (time.time() - t_start) / 60 > cfg["time_limit_min"]:
             log(name, "time limit reached, stopping"); break
 
+    test_metrics = None
+    if cfg["final_eval"] and cfg["save_ckpt"] and best_ep > 0:
+        try:
+            test_metrics = final_eval(model, f"{WORK}/{name}_best.pt", name, cfg, device)
+        except Exception as e:                      # keep the checkpoint; evaluation can be re-run
+            log(name, "FINAL-EVAL FAILED:", repr(e))
     summary = dict(name=name, cfg=cfg, best_val_qwk=best, best_epoch=best_ep, epochs_run=len(rows),
-                   total_minutes=(time.time() - t_start) / 60, rows=rows)
+                   total_minutes=(time.time() - t_start) / 60, rows=rows, test_metrics=test_metrics)
     json.dump(summary, open(f"{WORK}/{name}_summary.json", "w"), indent=2)
     make_curves(name, rows, best_ep)
     log(name, "DONE best val QWK", best, "at epoch", best_ep)
@@ -370,20 +448,30 @@ if __name__ == "__main__":
         jobs = [{**DEFAULTS, **j} for j in JOBS]       # noqa: F821  (JOBS is defined in the generated header)
         if any(j["aug_figure"] for j in jobs):
             aug_figure()
+        import threading
         import torch
         ngpu = torch.cuda.device_count()
-        log("GPUs visible:", ngpu, "jobs:", [j["name"] for j in jobs])
-        procs = []
+        log("GPUs visible:", ngpu, "jobs:", [(j["name"], j["gpu"]) for j in jobs])
+        queues = {g: [] for g in range(max(ngpu, 1))}
         for i, j in enumerate(jobs):
-            env = dict(os.environ, SIC_JOB=json.dumps(j), SIC_DATA=DATA, SIC_WORK=WORK,
-                       CUDA_VISIBLE_DEVICES=str(i % max(ngpu, 1)) if ngpu else "")
-            out = open(f"{WORK}/{j['name']}.out", "w")
-            procs.append((j["name"], subprocess.Popen([sys.executable, os.path.abspath(__file__)], env=env, stdout=out, stderr=subprocess.STDOUT), out))
+            queues[j["gpu"] if j["gpu"] is not None else i % len(queues)].append(j)
         rc = {}
-        for n, p, out in procs:
-            rc[n] = p.wait(); out.close()
-        for n, _, _ in procs:
+
+        def worker(g, q):
+            for j in q:
+                env = dict(os.environ, SIC_JOB=json.dumps(j), SIC_DATA=DATA, SIC_WORK=WORK,
+                           CUDA_VISIBLE_DEVICES=str(g) if ngpu else "")
+                with open(f"{WORK}/{j['name']}.out", "w") as out:
+                    rc[j["name"]] = subprocess.Popen([sys.executable, os.path.abspath(__file__)], env=env,
+                                                     stdout=out, stderr=subprocess.STDOUT).wait()
+                log("finished", j["name"], "exit code", rc[j["name"]], "(gpu", g, ")")
+
+        ths = [threading.Thread(target=worker, args=(g, q)) for g, q in queues.items() if q]
+        [t.start() for t in ths]
+        [t.join() for t in ths]
+        for j in jobs:
+            n = j["name"]
             log("=" * 30, n, "exit code", rc[n])
-            print(open(f"{WORK}/{n}.out", errors="ignore").read()[-6000:], flush=True)
+            print(open(f"{WORK}/{n}.out", errors="ignore").read()[-5000:], flush=True)
         if any(rc.values()):
             sys.exit(1)

@@ -121,3 +121,21 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 - Bước dHash trên Kaggle cho kết quả gây hiểu lầm (94% "gần trùng"); đã viết `code/preprocess/dup_check_local.py` chạy trên máy (CPU, đọc trực tiếp các file tar) để kiểm tra lại bằng bộ mô tả chặt hơn, có tự kiểm chứng bằng bản sao bị làm hỏng. Kết luận: không có ảnh trùng.
 - Overleaf: bản nháp biên dịch báo "hết thời gian" (0 lỗi, 3 cảnh báo). Đã giảm ảnh `d03` (3,1 MB → 217 KB, đổi sang JPG), sửa bảng `tab:experiments` (cảnh báo tabularx), bỏ chữ đậm trong listing (cảnh báo font). Nguyên nhân chính khả dĩ: lần biên dịch đầu của XeLaTeX phải dựng cache font; gói miễn phí giới hạn thời gian.
 - Báo cáo: đã điền kết quả GĐ1 vào mục 3.1 (kết quả tiền xử lý, hình trước/sau cắt viền, kiểm tra trùng).
+
+---
+
+## GĐ1 duyệt, chuẩn bị GĐ3 (benchmark GPU) và MiKTeX (2026-11-24 đêm)
+
+> Người dùng duyệt GĐ1. Thời gian còn lại để hoàn thiện báo cáo: khoảng 12 giờ (đến khoảng 10:00 ngày 25/11), nên chỉ làm những việc cần thiết cho báo cáo.
+
+### MiKTeX (biên dịch PDF tại máy, không phụ thuộc Overleaf)
+- **Làm gì:** cài MiKTeX 25.12 bằng `winget install MiKTeX.MiKTeX --source winget --scope user` (lần đầu lỗi vì nguồn `msstore`), cập nhật cơ sở dữ liệu tên file (`initexmf --update-fndb`) vì `geometry.sty` ở trạng thái "đã cài nhưng không tìm thấy". Viết `code/figures/build_pdf.sh` (xelatex → biber → xelatex ×2).
+- **Kết quả:** biên dịch thành công `Capstone-Project_latex/main.pdf` (37 trang), đúng cấu trúc template (bìa, mục lục, danh mục hình/bảng, chương 1–6, tài liệu tham khảo, phụ lục). Chỉ còn 1 cảnh báo overfull nhỏ (13 pt). Bảng 2.3 từng tràn lề đã sửa.
+- **Lưu ý:** lúc chạy lần đầu tôi chạy hai chuỗi biên dịch chồng nhau và phải dừng các tiến trình TeX bằng tay.
+
+### Chuẩn bị benchmark / huấn luyện
+- Trọng số B1 (ResNet-50 torchvision v1 qua timm) và B2 (ViT-L MAE ImageNet của Meta) tải về, **đã kiểm tra nạp được trên CPU**: ViT: thiếu `fc_norm`/`head` (khởi tạo mới, đúng công thức chính thức), thừa `norm` (bỏ); ResNet: chỉ thiếu `fc`. Upload thành Kaggle dataset private `thinhlai/sic-dr-imagenet-weights`.
+- `train_lib.py`: thêm hàng đợi theo GPU (nhiều job tuần tự trên mỗi GPU), `resolve_path` (tìm file trọng số theo tên trong `/kaggle/input`), và `final_eval()` — đánh giá EyePACS-test và DDR-test **đúng một lần** trên checkpoint tốt nhất theo EyePACS-val (lưu logits + đặc trưng vào `.npz`). Đã kiểm thử CPU với dữ liệu giả.
+- `code/eval/analyze.py`: tính QWK, macro-F1, AUC referable, recall từng mức, bootstrap CI 1000 lần (dùng chung mẫu lại để so sánh cặp), hình e01–e05, t-SNE a03/a04, và bảng LaTeX tự sinh từ `results.json` (tránh chép số tay). Kiểm thử bằng dữ liệu giả (không phải kết quả thật).
+- `code/demo/gradcam.py` và `app.py` (Gradio, giao diện tiếng Anh) kiểm thử với mô hình ngẫu nhiên nhỏ.
+- Benchmark `thinhlai/sic-dr-bench` đã đẩy lên Kaggle (M1 và B2 ViT-L song song trên 2 GPU, rồi B1), đang xếp hàng chờ GPU.
