@@ -160,3 +160,10 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 2. **K3 (tự đẩy khi K2 xong, xong khoảng 06:00):** M1 và B2 chạy **8 epoch** (seed 0). *Lý do:* kiểm tra xem kết luận (đặc biệt "B2 hơn M1 trên DDR") có đổi khi huấn luyện lâu hơn không, đúng mối lo "5 epoch quá thấp". 8 epoch (không phải 10) để còn đệm thời gian trước mốc 07:00–08:00.
 3. **Không chạy thêm seed ViT-L** (không đủ thời gian): độ tin cậy dựa trên bootstrap 95% CI; B1 có 3 seed. Sẽ nói rõ trong báo cáo.
 4. Linear probe đã bỏ.
+
+## 25/11 06:00–06:30 — K2 xong, phân tích 5 epoch
+- K2 (M2_s0 + B1×3) xong 04:24; K3 (M1 và B2, 8 epoch) tự đẩy lúc 04:24, đang chạy.
+- Phân tích đầy đủ 5 epoch (`results/main_5ep/`): QWK DDR argmax B1 0.701, B2 0.722, M1 0.691, M2 0.734; ΔQWK B1 -0.015, B2 -0.068, M1 -0.010, M2 -0.076.
+- Biến thể ordinal (ngưỡng chỉ fit trên EyePACS-val): DDR B2 0.744, M1 0.727, M2 0.753.
+- Nhận xét trung thực: giả thuyết M1 > B2 trên DDR KHÔNG được ủng hộ ở 5 epoch; RETFound giữ QWK ổn định giữa hai miền (ΔQWK ≈ 0 khớp prior) nhưng không cao hơn tuyệt đối. QWK val vẫn tăng ở epoch 5 → chờ K3 (8 epoch) để xem độ nhạy.
+- Grad-CAM (a01), curves (t_curves_all), t-SNE, confusion, ROC, recall, bootstrap đã tạo.

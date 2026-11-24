@@ -4,6 +4,7 @@ import os
 import sys
 
 import matplotlib
+import matplotlib.ticker
 import pandas as pd
 
 matplotlib.use("Agg")
@@ -24,6 +25,7 @@ for f in sorted(glob.glob(os.path.join(src, "*_log.csv"))):
         ax.plot(d["epoch"], d[col], ls, marker="o", ms=3, color=COL.get(model, "k"), label=name, alpha=0.9)
         ax.set_title(f"EyePACS-validation {lab}")
         ax.set_xlabel("epoch")
+        ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
 axs[0].legend(fontsize=7, ncol=2)
 plt.tight_layout()
 plt.savefig(out, dpi=170)
