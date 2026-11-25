@@ -1,0 +1,19 @@
+{
+  "id": "thinhlai/sic-dr-run-k6",
+  "title": "SIC DR Run k6",
+  "code_file": "script.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "false",
+  "dataset_sources": [
+    "thinhlai/sic-dr-ckpt5b"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [
+    "thinhlai/sic-dr-package"
+  ],
+  "model_sources": []
+}

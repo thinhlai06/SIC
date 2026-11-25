@@ -184,3 +184,10 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 - Lý do: K3 bị hủy; chạy lại 8 epoch từ đầu (~3 h) không kịp. Phương án rẻ hơn: tiếp tục 3 epoch từ best.pt của M1, B2, B1 (seed 0), tổng 8 epoch hiệu dụng. Quy tắc cố định TRƯỚC khi xem kết quả: blr 2e-3 (ViT-L) / lr 4e-5 (ResNet-50), warm-up 0,25 epoch, cosine về 1e-6, aug chuẩn, seed 100, chọn checkpoint theo QWK EyePACS-val, không dùng DDR.
 - Code: thêm `init_ckpt` vào train_lib (đã test load trên CPU), jobs_k5.json, dataset `sic-dr-ckpt5` (3 checkpoint), kernel `sic-dr-run-k5` đẩy 07:07 (GPU0: M1; GPU1: B2 rồi B1).
 - Kế hoạch: xong dự kiến 08:30–08:45. Nếu chưa xong lúc 09:15 thì giữ nguyên báo cáo hiện tại (đã nhất quán). M2 không có bản tiếp tục (thiếu GPU).
+
+## 25/11 08:22 — Quyết định mới: huấn luyện lại từ đầu 15 epoch, 3 mô hình
+- Người dùng không chấp nhận QWK ~0.70 và không muốn huấn luyện nối tiếp (5+3). Hạn nộp dời đến 16:00 (viết báo cáo chỉ còn ~1 giờ cuối).
+- Đã dừng K5 (xóa kernel), K6 chưa từng đẩy. Nguyên nhân K3 bị hủy: tôi đẩy với `-t 9000` (150 phút) → từ nay luôn `-t 43200`.
+- Chốt: M1 (RETFound), B2 (ViT-L ImageNet MAE), B1 (ResNet-50, 2 seed), 15 epoch, warm-up 2 epoch, một mạch. Bỏ M2 (thiếu GPU cho ViT-L thứ ba): mất H3, giữ H1 và H2. Kernel `sic-dr-run-e15` đẩy 08:22; ETA M1/B2 ~13:45, B1 ~14:35 (GPU0: M1→B1_s0; GPU1: B2→B1_s1).
+- Mọi kết quả 5 epoch cũ (K1, K2, K3, K5) bị LOẠI khỏi báo cáo; bản cũ giữ ở git tag `report-5ep-v1`.
+- QWK >= 0.85 là mong muốn của người dùng; tôi đã nói rõ không thể đảm bảo (ảnh 224 px, nhãn nhiễu) và không chỉnh gì theo DDR.
