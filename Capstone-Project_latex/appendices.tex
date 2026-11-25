@@ -2,8 +2,7 @@
 \chapter{Source Code and Implementation Details}
 \label{app:code}
 
-This appendix gives key excerpts of the training library used on Kaggle (\code{code/train/train\_lib.py} in the project repository \url{https://github.com/thinhlai06/SIC}). The excerpts correspond to Equations~\eqref{eq:llrd}, \eqref{eq:sampler}, \eqref{eq:cosine} and \eqref{eq:qwk}.
-% [PENDING: re-check the excerpts against the final version of train_lib.py before submission]
+This appendix gives key, slightly shortened, excerpts of the training library used on Kaggle (file \path{code/train/train_lib.py} in the project repository \url{https://github.com/thinhlai06/SIC}). The excerpts correspond to Equations~\eqref{eq:llrd}, \eqref{eq:sampler}, \eqref{eq:cosine} and \eqref{eq:qwk}.
 
 \begin{lstlisting}[language=Python, caption={Layer-wise learning-rate decay: parameter groups for a ViT (Equation~\eqref{eq:llrd}).}, label={lst:llrd}]
 def param_groups(model, cfg, base_lr):
@@ -56,7 +55,6 @@ def metrics(y, pred, logits=None):
 \label{app:hyperparameters}
 
 Table~\ref{tab:hyperparameters} lists the settings of the fine-tuning recipe of Section~\ref{subsec:finetune}.
-% [PENDING: values marked (planned) are confirmed or changed after the Kaggle speed benchmark; update this table with the final values actually used]
 
 \begin{table}[htbp]
     \centering

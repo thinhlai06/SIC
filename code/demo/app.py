@@ -20,6 +20,7 @@ ap.add_argument("--ckpt", required=True)
 ap.add_argument("--arch", default="vit_large_patch16_224")
 ap.add_argument("--port", type=int, default=7860)
 ap.add_argument("--share", action="store_true")
+ap.add_argument("--model-name", default="RETFound (ViT-L)", help="shown in the page header")
 args = ap.parse_args()
 
 torch.set_num_threads(max(1, (os.cpu_count() or 4) - 1))
@@ -41,7 +42,7 @@ def predict(img):
 
 with gr.Blocks(title="DR grading demo") as demo:
     gr.Markdown("# Diabetic retinopathy grading from fundus photographs\n"
-                "Model: RETFound (ViT-L) fine-tuned on EyePACS. Upload a colour fundus photograph.  \n"
+                f"Model: {args.model_name} fine-tuned on EyePACS. Upload a colour fundus photograph.  \n"
                 "*Research prototype of the SIC capstone project - not a medical device.*")
     with gr.Row():
         with gr.Column():

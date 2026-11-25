@@ -34,9 +34,10 @@
 - ✅ Thí nghiệm có thể kéo dài đến khoảng 07:00–08:00 nếu cần; phần còn lại chỉ viết/duyệt/sửa.
 - ✅ Tài liệu tham khảo: tôi tự kiểm chứng trên mạng. Kết quả: thứ tự tác giả DDR **đúng** (Li, Gao, Wang, Guo, Liu, Kang); GDRNet có số trang **430–440**, DOI 10.1007/978-3-031-43904-9_42 (đã thêm vào bib; số tập LNCS không xác minh được nên không ghi); RETFound: số 7981, trang 156–163, thứ tự 9 tác giả đầu **đúng**.
 
-## D. Câu hỏi phát sinh trong lúc chạy
+## D. Còn lại trước khi nộp (25/11, sau kết quả 15 epoch)
 
-1. **Kết quả không ủng hộ H1–H3** (M1 không hơn B2 trên DDR; M2 không làm giảm ΔQWK). Tôi đã báo cáo trung thực ở mục 3.3.9 và chương 4. Nếu bạn muốn nhấn mạnh khác (ví dụ coi kết quả âm là đóng góp chính), cho tôi biết.
-2. **Số trang:** bản PDF hiện ~51–52 trang gồm cả bìa/mục lục/danh mục hình-bảng (9 trang) và tài liệu tham khảo/phụ lục (5 trang); phần nội dung chương 1–6 khoảng 37 trang. Nếu giảng viên đếm toàn bộ và yêu cầu ≤ 50, tôi sẽ rút gọn phụ lục.
-3. **Ảnh nhóm** (chương 5) vẫn chờ bạn gửi file.
-4. **Chỉ có 1 seed cho B2/M1/M2** (B1 có 3 seed): đã nêu rõ là hạn chế ở mục 2.3.3 và 3.5.5.
+1. **Ảnh nhóm** (chương 5) vẫn chờ bạn gửi file.
+2. **Kết quả:** QWK trên DDR 0.67–0.71 (tối đa 0.734 với giải mã thứ bậc), thấp hơn mục tiêu 0.85; H1 không được ủng hộ. Báo cáo ghi đúng như đo được.
+3. **Số trang:** PDF 51 trang gồm cả bìa, mục lục, danh mục, tài liệu tham khảo và phụ lục. Nếu giảng viên đếm toàn bộ và yêu cầu ≤ 50 thì cần rút gọn.
+4. **Bảng 1.3:** giai đoạn 5 (nộp báo cáo và thuyết trình) đang ghi "In progress".
+5. **Một seed** cho B2 và M1 (B1 có 2 seed): đã nêu là hạn chế.

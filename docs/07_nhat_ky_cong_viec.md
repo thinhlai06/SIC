@@ -191,3 +191,10 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 - Chốt: M1 (RETFound), B2 (ViT-L ImageNet MAE), B1 (ResNet-50, 2 seed), 15 epoch, warm-up 2 epoch, một mạch. Bỏ M2 (thiếu GPU cho ViT-L thứ ba): mất H3, giữ H1 và H2. Kernel `sic-dr-run-e15` đẩy 08:22; ETA M1/B2 ~13:45, B1 ~14:35 (GPU0: M1→B1_s0; GPU1: B2→B1_s1).
 - Mọi kết quả 5 epoch cũ (K1, K2, K3, K5) bị LOẠI khỏi báo cáo; bản cũ giữ ở git tag `report-5ep-v1`.
 - QWK >= 0.85 là mong muốn của người dùng; tôi đã nói rõ không thể đảm bảo (ảnh 224 px, nhãn nhiễu) và không chỉnh gì theo DDR.
+
+## 25/11 15:18–15:35 — Kết quả 15 epoch và hoàn thiện báo cáo
+- Kernel `sic-dr-run-e15` COMPLETE (tải lúc 15:18). Thời gian chạy: M1 356 phút, B2 328 phút, B1 50 và 48 phút.
+- QWK arg-max (EyePACS-test / DDR-test): B1 0.672 / 0.669; B2 0.686 / 0.713; M1 0.670 / 0.682. Giải mã thứ bậc (ngưỡng fit trên EyePACS-val): DDR 0.709 / 0.734 / 0.707.
+- H1 không được ủng hộ (M1 − B2 = −0.031, KTC 95% [−0.051, −0.009]); H2 không phân biệt được. Mục tiêu 0.85 KHÔNG đạt. Huấn luyện dài hơn không giúp: val QWK tốt nhất ở epoch 5–6 (M1, B1) và 11 (B2).
+- Demo dùng checkpoint B2 (val QWK cao nhất, không chọn theo test).
+- Đã viết mục 3.3, 3.4, 3.5.4, phát hiện chính chương 4; PDF 51 trang, không còn ghi chú PENDING.
