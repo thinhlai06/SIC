@@ -21,6 +21,7 @@ ap.add_argument("--arch", default="vit_large_patch16_224")
 ap.add_argument("--port", type=int, default=7860)
 ap.add_argument("--share", action="store_true")
 ap.add_argument("--model-name", default="RETFound (ViT-L)", help="shown in the page header")
+ap.add_argument("--open", action="store_true", help="open the browser automatically")
 args = ap.parse_args()
 
 torch.set_num_threads(max(1, (os.cpu_count() or 4) - 1))
@@ -57,4 +58,4 @@ with gr.Blocks(title="DR grading demo") as demo:
     btn.click(predict, inp, [lab, pre, verdict, cam])
 
 if __name__ == "__main__":
-    demo.launch(server_port=args.port, share=args.share)
+    demo.launch(server_port=args.port, share=args.share, inbrowser=args.open)

@@ -417,7 +417,6 @@ The following limitations apply to all conclusions of this report.
     \item \textbf{Training budget.} The main comparison uses only 5 epochs. The repetition of B1, B2 and M1 with 15 epochs (Section~\ref{subsec:budget_check}) did not raise the DDR scores and kept the order of B2 and M1; it does not show what a different recipe or an even longer schedule would reach.
     \item B2, M1 and M2 were trained with a single seed, and B1 with three; the bootstrap intervals in Section~\ref{sec:modeling} measure the sampling noise of the test images, not the variation between training runs. The three ResNet-50 seeds differ by at most 0.008 QWK on the validation set and 0.020 on DDR, so differences of this size between ViT-L models should not be over-interpreted.
     \item All images were reduced to $224\times224$ pixels, which hides small lesions and probably limits the recognition of grade~1; the absolute QWK (0.69--0.75) is therefore below published high-resolution results, and the conclusions concern the \emph{relative} behaviour of the models under identical conditions.
-    \item EyePACS labels come from a single grader per image and are noisy, whereas DDR was graded by a team of seven trained graders (Section~
-ef{subsec:ddr}); part of the higher score on DDR may come from this difference in label quality.
+    \item EyePACS labels come from a single grader per image and are noisy, whereas DDR was graded by a team of seven trained graders (Section~\ref{subsec:ddr}); part of the higher score on DDR may come from this difference in label quality.
 \end{itemize}
 
