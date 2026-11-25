@@ -36,4 +36,7 @@
 
 ## D. Câu hỏi phát sinh trong lúc chạy
 
-(chưa có)
+1. **Kết quả không ủng hộ H1–H3** (M1 không hơn B2 trên DDR; M2 không làm giảm ΔQWK). Tôi đã báo cáo trung thực ở mục 3.3.9 và chương 4. Nếu bạn muốn nhấn mạnh khác (ví dụ coi kết quả âm là đóng góp chính), cho tôi biết.
+2. **Số trang:** bản PDF hiện ~51–52 trang gồm cả bìa/mục lục/danh mục hình-bảng (9 trang) và tài liệu tham khảo/phụ lục (5 trang); phần nội dung chương 1–6 khoảng 37 trang. Nếu giảng viên đếm toàn bộ và yêu cầu ≤ 50, tôi sẽ rút gọn phụ lục.
+3. **Ảnh nhóm** (chương 5) vẫn chờ bạn gửi file.
+4. **Chỉ có 1 seed cho B2/M1/M2** (B1 có 3 seed): đã nêu rõ là hạn chế ở mục 2.3.3 và 3.5.5.

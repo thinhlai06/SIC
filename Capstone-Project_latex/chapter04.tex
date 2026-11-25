@@ -19,7 +19,7 @@ The project delivered a complete, reproducible experiment on the robustness of d
 \label{subsec:main_findings}
 
 On the unseen DDR dataset all four models reach a QWK between 0.69 and 0.73 with the arg-max rule (0.73--0.75 with the ordinal rule fitted on EyePACS-validation), and an AUC of 0.88--0.91 for referable DR. Contrary to the initial hypotheses, the RETFound model fine-tuned with the same recipe (M1) was \emph{not} better than the ImageNet-MAE model (B2) on DDR, and its feature space separates the two datasets more strongly than that of the ImageNet models. Retinal pre-training did give M1 a higher in-domain score than B2 and a better recall of severe disease, and its errors are mostly over-gradings rather than missed disease. The domain-shift augmentation (M2) raised the DDR score of the ViT-L model by 0.043 QWK relative to M1, but lowered the in-domain score. The in-domain to out-of-domain difference is small for all models once the different grade mix of the two datasets is taken into account, which shows that comparing raw QWK values across datasets can be misleading. These are honest, partly negative results; they are valuable because they show under which conditions a foundation model does \emph{not} automatically solve dataset shift.
-% [PENDING: add one sentence with the outcome of the 8-epoch check (Section 3.3.8) after k3 is analysed]
+The validation curves were still rising after five epochs, and an 8-epoch check that would have measured the effect of a longer schedule was interrupted by the compute platform, so the rankings reported here hold for a short, equal training budget.
 
 \subsection{Benefits}
 \label{subsec:benefits}

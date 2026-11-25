@@ -56,7 +56,7 @@ In the second stage each $224\times224$ image is converted to a $64\times64$ gra
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{figures/p04_dup_top_pairs.jpg}
+    \includegraphics[width=0.92\textwidth]{figures/p04_dup_top_pairs.jpg}
     \caption{The six DDR images (top) with the highest correlation to an EyePACS image (bottom) are different retinas, not duplicates.}
     \label{fig:dup_pairs}
 \end{figure}
@@ -107,7 +107,7 @@ To quantify what the eye sees, we measured simple statistics on a random sample 
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{figures/d04_color_stats_domain_gap.png}
+    \includegraphics[width=0.92\textwidth]{figures/d04_color_stats_domain_gap.png}
     \caption{Histograms of the mean red, green and blue value inside the retina region for 400 random images per dataset. The blue (and, less strongly, green) channel of DDR is clearly shifted towards lower values.}
     \label{fig:color_stats}
 \end{figure}
@@ -143,7 +143,7 @@ Figure~\ref{fig:curves} shows the EyePACS-validation QWK, macro-F1 and cross-ent
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{figures/t01_curves_all.jpg}
+    \includegraphics[width=0.95\textwidth]{figures/t01_curves_all.jpg}
     \caption{EyePACS-validation QWK (left), macro-F1 (middle) and cross-entropy (right) per epoch for B1 (three seeds, grey), B2 (orange), M1 (blue) and M2 (green). Lines are runs; markers are epoch-end evaluations.}
     \label{fig:curves}
 \end{figure}
@@ -159,7 +159,7 @@ Table~\ref{tab:main_qwk} gives the primary metric. B1 is the mean and standard d
     \centering
     \caption{QWK on the in-domain test set (EyePACS-test, 42{,}670 images) and on the unseen target (DDR-test, 3{,}759 images). $\Delta$QWK is QWK(EyePACS-test) $-$ QWK(DDR-test); a negative value means that the score on DDR is \emph{higher}. 5-epoch runs, arg-max decision.}
     \label{tab:main_qwk}
-    ootnotesize
+    \footnotesize
     \input{tables/table_qwk.tex}
 \end{table}
 
@@ -178,7 +178,7 @@ All four models separate referable from non-referable eyes well on both test set
 \subsection{Why the In-Domain to Out-of-Domain Difference Needs Care}
 \label{subsec:matched}
 
-A negative $\Delta$QWK does not mean that the models generalise better to DDR than to EyePACS. QWK depends on the grade mix of the test set: DDR has 50\% of grade~0 and 35.8\% of grade~2, whereas EyePACS has 73.6\% of grade~0 (Section~\ref{subsec:eda_labels}). DDR labels also come from a consensus of several graders and are probably cleaner than the single-grader EyePACS labels. To remove the first effect, the EyePACS-test images were resampled (stratified by grade) to the DDR grade mix before computing the QWK, and the bootstrap was repeated. Table~\ref{tab:matched} gives the result.
+A negative $\Delta$QWK does not mean that the models generalise better to DDR than to EyePACS. QWK depends on the grade mix of the test set: DDR has 50\% of grade~0 and 35.8\% of grade~2, whereas EyePACS has 73.6\% of grade~0 (Section~\ref{subsec:eda_labels}). DDR was graded by a team of trained graders and its labels are probably cleaner than the single-grader EyePACS labels. To remove the first effect, the EyePACS-test images were resampled (stratified by grade) to the DDR grade mix before computing the QWK, and the bootstrap was repeated. Table~\ref{tab:matched} gives the result.
 
 \begin{table}[htbp]
     \centering
@@ -251,7 +251,7 @@ The arg-max rule ignores the ordering of the grades. As a secondary analysis, th
     \centering
     \caption{QWK with ordinal decoding (expected grade and thresholds fitted on EyePACS-validation). B1 is the mean over three seeds.}
     \label{tab:ordinal}
-    ootnotesize
+    \footnotesize
     \input{tables/table_ordinal.tex}
 \end{table}
 
@@ -275,14 +275,14 @@ Figure~\ref{fig:tsne_domain} shows a t-SNE embedding of the encoder features of 
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{figures/a03_tsne_domain.jpg}
+    \includegraphics[width=0.9\textwidth]{figures/a03_tsne_domain.jpg}
     \caption{t-SNE of the encoder features coloured by dataset (blue: EyePACS-test, orange: DDR-test) for B1, B2, M1 and M2.}
     \label{fig:tsne_domain}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{figures/a04_tsne_grade.jpg}
+    \includegraphics[width=0.9\textwidth]{figures/a04_tsne_grade.jpg}
     \caption{The same t-SNE embeddings coloured by DR grade.}
     \label{fig:tsne_grade}
 \end{figure}
@@ -292,7 +292,16 @@ In the B1 and B2 embeddings the two datasets overlap strongly; in the M1 and M2 
 \subsection{Effect of a Longer Training Schedule}
 \label{subsec:budget_check}
 
-% [PENDING: 8-epoch runs of M1 and B2 (Kaggle kernel k3 still running). Write: table of QWK 5 vs 8 epochs (EyePACS-test, DDR-test, argmax and ordinal), curves (t01 dashed), whether the ranking B2 vs M1 changes. Also the sentence on the 5-epoch limitation for subsec:limitations.]
+Because the validation QWK was still rising after epoch 5, M1 and B2 were also started with an 8-epoch cosine schedule (a third Kaggle session, two jobs in parallel). This check could \emph{not} be completed: after about 2.5 hours, when B2 had finished epoch 7 and M1 epoch 6, the Kaggle session was cancelled by the platform (the script's own time limit of 240 minutes had not been reached, and no reason was reported). The runs therefore have validation curves but no final evaluation on the test sets, and no DDR number exists for them. There was not enough time before the deadline to repeat them, and they are \emph{not} used in any table of this chapter. Figure~\ref{fig:budget_curves} compares their validation curves with those of the finished 5-epoch runs.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/t02_budget_curves.jpg}
+    \caption{EyePACS-validation QWK (left) and macro-F1 (right) of B2 (orange) and M1 (blue): finished 5-epoch runs (solid) and the interrupted 8-epoch runs (dashed). The dashed runs stopped before the learning rate was annealed.}
+    \label{fig:budget_curves}
+\end{figure}
+
+For B2 the validation QWK of the 8-epoch run reached 0.686 after epoch 7, higher than the final value of the 5-epoch run (0.668), and was still rising; its macro-F1 also rose (0.510 versus 0.496). For M1 the 8-epoch run reached 0.686 and 0.681 after epochs 5 and 6, which is not higher than the 5-epoch value (0.694), although its learning rate was still far from the end of the cosine schedule. Since the last epochs of a cosine schedule usually bring the largest gain, these partial curves cannot predict the final result. They only indicate that (i) the 5-epoch budget did not let the models converge, (ii) B2 seems to profit at least as much from additional epochs as M1, so the lower in-domain score of B2 at 5 epochs is not simply a sign of weaker pre-training, and (iii) the ranking of B2 and M1 on DDR in Table~\ref{tab:main_qwk} may change with a longer schedule. This remains an open question of the study.
 
 \subsection{Summary of the Hypotheses}
 \label{subsec:hypotheses_summary}
@@ -329,7 +338,7 @@ Figure~\ref{fig:demo_upload} shows the page when it is opened. The title and the
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.62\textwidth]{figures/u01_demo_upload.jpg}
+    \includegraphics[width=0.5\textwidth]{figures/u01_demo_upload.jpg}
     \caption{Demo application before an image is uploaded: image input on the left, result panels (empty) on the right.}
     \label{fig:demo_upload}
 \end{figure}
@@ -341,7 +350,7 @@ Figure~\ref{fig:demo_result} shows the result for a DDR-test image of reference 
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.78\textwidth]{figures/u02_demo_result.jpg}
+    \includegraphics[width=0.62\textwidth]{figures/u02_demo_result.jpg}
     \caption{Demo application after grading a DDR-test image: predicted grade and referral hint (top right), class probabilities, the preprocessed input (bottom left) and the Grad-CAM overlay (bottom right).}
     \label{fig:demo_result}
 \end{figure}
@@ -386,5 +395,10 @@ The following limitations apply to all conclusions of this report.
     \item DDR grade~3 has only 71 test images, so its recall and F1 have wide confidence intervals.
     \item The DDR colour statistics were inspected during the EDA, so the \emph{motivation} for the colour augmentation of M2 was informed by the target domain (the augmentation ranges themselves are generic and were not tuned on DDR).
     \item Domain generalization is limited to data augmentation; no domain-invariant feature learning was attempted.
+    \item \textbf{Training budget.} All models were trained for only 5 epochs, the number that fitted the free GPU quota, and the validation QWK was still rising at the end. The attempted 8-epoch check was interrupted by the platform and gave no test result (Section~\ref{subsec:budget_check}). All comparisons therefore refer to a short, equal budget, and the absolute scores, and possibly the ranking of the models, could change with longer training.
+    \item B2, M1 and M2 were trained with a single seed, and B1 with three; the bootstrap intervals in Section~\ref{sec:modeling} measure the sampling noise of the test images, not the variation between training runs. The three ResNet-50 seeds differ by at most 0.008 QWK on the validation set and 0.020 on DDR, so differences of this size between ViT-L models should not be over-interpreted.
+    \item All images were reduced to $224\times224$ pixels, which hides small lesions and probably limits the recognition of grade~1; the absolute QWK (0.69--0.75) is therefore below published high-resolution results, and the conclusions concern the \emph{relative} behaviour of the models under identical conditions.
+    \item EyePACS labels come from a single grader per image and are noisy, whereas DDR was graded by a team of seven trained graders (Section~
+ef{subsec:ddr}); part of the higher score on DDR may come from this difference in label quality.
 \end{itemize}
-% [PENDING: finalize the training-budget limitation after the 8-epoch check (k3) is analysed; the items below already hold for the 5-epoch runs.]
+

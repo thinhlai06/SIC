@@ -1,0 +1,1 @@
+k3 ended badly: thinhlai/sic-dr-run-k3 has status "KernelWorkerStatus.CANCEL_ACKNOWLEDGED"

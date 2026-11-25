@@ -121,7 +121,7 @@ where $\eta_{\text{base}}$ is the learning rate of the head and $\gamma\in(0,1)$
 \end{equation}
 where $t$ is the current optimisation step, $T$ the total number of steps, $T_w$ the warm-up steps (one epoch), $\eta_{\max}$ the peak rate and $\eta_{\min}=10^{-6}$ the final rate. Other settings are drop-path 0.2, gradient clipping at norm 1.0 and ImageNet mean/standard-deviation input normalisation, as in the official fine-tuning code. For ResNet-50 (B1) the same optimiser and schedule are used with a single learning rate and no LLRD.
 
-\paragraph{Training length.} All four models are trained for \textbf{5 epochs} with the cosine schedule above, so that the comparison uses an identical budget. The budget was set by compute: a speed benchmark on Kaggle T4 GPUs measured about 36 training images per second for ViT-L at batch size 16 (peak memory 8.4\,GB) and about 192 images per second for ResNet-50, and one Kaggle session may run at most 12 hours on two GPUs. In practice one ViT-L run of 5 epochs took about 107--114 minutes (two runs in parallel, one per GPU, including the final evaluation on both test sets) and one ResNet-50 run about 16 minutes. The validation QWK was still rising at epoch 5 for all models (Section~\ref{subsec:training_dynamics}); therefore an additional 8-epoch run of M1 and B2 was trained to measure how much the short budget limits the results (Section~\ref{subsec:budget_check}).
+\paragraph{Training length.} All four models are trained for \textbf{5 epochs} with the cosine schedule above, so that the comparison uses an identical budget. The budget was set by compute: a speed benchmark on Kaggle T4 GPUs measured about 36 training images per second for ViT-L at batch size 16 (peak memory 8.4\,GB) and about 192 images per second for ResNet-50, and one Kaggle session may run at most 12 hours on two GPUs. In practice one ViT-L run of 5 epochs took about 107--114 minutes (two runs in parallel, one per GPU, including the final evaluation on both test sets) and one ResNet-50 run about 16 minutes. The validation QWK was still rising at epoch 5 for all models (Section~\ref{subsec:training_dynamics}); therefore an additional 8-epoch run of M1 and B2 was started to measure how much the short budget limits the results; it was interrupted by the platform before completion (Section~\ref{subsec:budget_check}).
 
 \subsection{Class Imbalance and Loss Function}
 \label{subsec:loss}
@@ -167,7 +167,9 @@ The secondary metrics are \textbf{macro-F1} (the unweighted mean of the five per
     \Delta\text{QWK} = \kappa_{\text{EyePACS-test}} - \kappa_{\text{DDR-test}},
     \label{eq:delta}
 \end{equation}
-where a smaller $\Delta\text{QWK}$ means that the model loses less when the imaging domain changes. Every metric on the test sets is accompanied by a 95\% \emph{bootstrap} confidence interval \cite{efron1993}: the test set is resampled with replacement 1{,}000 times, the metric is recomputed on each resample, and the 2.5th and 97.5th percentiles are reported. Differences between two models are tested with a paired bootstrap on the same resamples, and a model is called better only if the intervals do not overlap substantially. For B1, which was trained with three seeds, the mean and standard deviation over seeds are reported in addition.
+where a smaller $\Delta\text{QWK}$ means that the model loses less when the imaging domain changes (a value near zero or below zero means that no loss is observed). Every metric on the test sets is accompanied by a 95\% \emph{bootstrap} confidence interval \cite{efron1993}: the test set is resampled with replacement 1{,}000 times, the metric is recomputed on each resample, and the 2.5th and 97.5th percentiles are reported. Differences between two models are tested with a paired bootstrap on the same resamples, and a model is called better only if the intervals do not overlap substantially. For B1, which was trained with three seeds, the mean and standard deviation over seeds are reported in addition.
+
+Two supplementary analyses were added after the first results showed that raw QWK values of the two datasets are hard to compare. They do not replace the primary protocol above. (i) \emph{Prior-matched $\Delta$QWK}: because QWK depends on the grade mix (EyePACS has 74\% grade~0, DDR 50\%), the EyePACS-test images are resampled, stratified by grade, to the grade proportions of DDR-test before $\kappa_{\text{EyePACS-test}}$ is computed, and Equation~\eqref{eq:delta} is evaluated on this matched set. (ii) \emph{Ordinal decoding}: instead of the arg-max, the predicted grade is the expected grade $\sum_k k\,p_k$ cut by four thresholds that are fitted to maximise QWK on EyePACS-validation only. DDR is never used to fit anything in either analysis.
 
 \subsection{Diagnostic Analysis}
 \label{subsec:diagnostics}
@@ -229,8 +231,8 @@ Table~\ref{tab:experiments} lists the runs that were actually trained. Because t
         \textbf{ID} & \textbf{Training mode} & \textbf{Epochs} & \textbf{Seeds} & \textbf{Purpose} \\
         \midrule
         B1 & Full fine-tuning & 5 & 0, 1, 2 & Conventional baseline \\
-        B2 & Full fine-tuning & 5 and 8 & 0 & Same architecture as M1, no retinal pre-training \\
-        M1 & Full fine-tuning & 5 and 8 & 0 & Main model \\
+        B2 & Full fine-tuning & 5 (8, interrupted) & 0 & Same architecture as M1, no retinal pre-training \\
+        M1 & Full fine-tuning & 5 (8, interrupted) & 0 & Main model \\
         M2 & Full fine-tuning + domain-shift augmentation & 5 & 0 & Effect of domain-shift augmentation \\
         \bottomrule
     \end{tabularx}

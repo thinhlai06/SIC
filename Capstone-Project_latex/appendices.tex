@@ -72,7 +72,7 @@ Table~\ref{tab:hyperparameters} lists the settings of the fine-tuning recipe of 
         Layer-wise LR decay     & 0.65                    & Equation~\eqref{eq:llrd}, 24 transformer blocks \\
         Schedule                & Warm-up + cosine        & 1 warm-up epoch, final rate $10^{-6}$ (Equation~\eqref{eq:cosine}) \\
         Physical / effective batch & 16 / 32              & Gradient accumulation of 2 steps \\
-        Epochs                  & 5 (8 for the budget check) & Best epoch chosen by EyePACS-validation QWK \\
+        Epochs                  & 5 & Best epoch chosen by EyePACS-validation QWK \\
         Loss                    & Cross-entropy           & Label smoothing 0.1 (Equation~\eqref{eq:ce}) \\
         Sampler                 & Square-root balanced    & Equation~\eqref{eq:sampler} \\
         Drop-path / grad. clip  & 0.2 / 1.0               & Regularisation and stability \\

@@ -174,3 +174,8 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 - Đã viết: 3.3 (động học huấn luyện, kết quả chính, so sánh khớp tỉ lệ nhãn, từng mức, ROC, biến thể ordinal, Grad-CAM/t-SNE, bảng tóm tắt giả thuyết), 3.4 (demo, ảnh chụp thật với M1), 3.5 phân tích lỗi, chương 4.
 - Phát hiện trung thực: H1, H2, H3 không được ủng hộ ở 5 epoch; M1 lỗi nghiêng về chấm quá cao (ít bỏ sót) còn B2/M2 chấm thấp hơn thực tế.
 - Còn chờ K3: mục 3.3.8, câu hạn chế về ngân sách huấn luyện, 1 câu ở chương 4.
+
+## 25/11 07:00–07:30 — K3 bị hủy, chốt báo cáo
+- K3 (M1, B2 với 8 epoch) bị Kaggle hủy sau ~2,5 giờ (chưa chạm giới hạn 240 phút của script, không có lý do). Chỉ còn đường cong validation (B2 đến epoch 7, M1 đến epoch 6), không có kết quả test.
+- Quyết định: KHÔNG chạy lại (cần ~3 giờ, sát hạn nộp). Báo cáo mục 3.3.8 mô tả đúng sự việc, chỉ dùng đường cong validation (hình t02), không đưa vào bảng nào; thêm giới hạn "ngân sách huấn luyện" ở 3.5.5 và chương 4.
+- PDF: 52 trang tổng (bìa/mục lục/danh mục 9 trang; chương 1–6 ~37 trang; tài liệu tham khảo + phụ lục ~6 trang).
