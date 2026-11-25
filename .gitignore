@@ -60,3 +60,7 @@ Capstone-Project_latex/*.toc
 Capstone-Project_latex/*.lof
 Capstone-Project_latex/*.lot
 Capstone-Project_latex/*.run.xml
+
+# Personal photos: kept local (the repository is public)
+anh_team/
+Capstone-Project_latex/figures/team_member_*.jpg

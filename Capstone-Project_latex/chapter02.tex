@@ -51,7 +51,7 @@ To make the comparison fair, three rules were fixed \emph{before} any training:
 
 \begin{enumerate}[leftmargin=1.8em]
     \item \textbf{DDR is touched once.} DDR is never used to choose a checkpoint, an epoch, a learning rate or an augmentation strength. All such choices use EyePACS-validation only.
-    \item \textbf{Same pipeline for every model.} All three models see the same preprocessed images, the same splits and the same training budget; only the architecture and the initial weights differ.
+    \item \textbf{Same pipeline for every model.} All four models see the same preprocessed images, the same splits and the same training budget; only the initial weights (and, for M2, the augmentation) differ.
     \item \textbf{Test sets are evaluated at the very end}, once per frozen checkpoint.
 \end{enumerate}
 
@@ -65,7 +65,7 @@ A duplicate check between EyePACS and DDR with a perceptual hash is part of the 
 
 \begin{table}[htbp]
     \centering
-    \caption{The three models compared. All are fine-tuned on EyePACS-train with the same pipeline.}
+    \caption{The four models compared. All are fine-tuned on EyePACS-train with the same pipeline.}
     \label{tab:models}
     \begin{tabularx}{\textwidth}{l l l X}
         \toprule
@@ -74,11 +74,12 @@ A duplicate check between EyePACS and DDR with a perceptual hash is part of the 
         B1 & ResNet-50                & ImageNet (supervised)           & Conventional baseline \\
         B2 & ViT-L/16 (307\,M params) & ImageNet, MAE                   & Same architecture as M1, but \emph{without} retinal pre-training: isolates the effect of retinal SSL \\
         M1 & ViT-L/16 (RETFound)      & Retinal fundus images, MAE      & Main model \\
+        M2 & ViT-L/16 (RETFound)      & as M1                           & M1 plus domain-shift augmentation: isolates the effect of augmentation \\
         \bottomrule
     \end{tabularx}
 \end{table}
 
-Each comparison answers one question. B2 versus M1 tells whether pre-training on \emph{retinal} images matters or whether the Vision Transformer architecture alone is responsible. B1 versus M1 compares a conventional model with the project's main model. A fourth model (M2: RETFound with domain-shift augmentation) and a linear probe (frozen encoder with a trainable linear head) were part of the original plan but were dropped because of the limited GPU time; all three models are fully fine-tuned.
+Each comparison answers one question. B2 versus M1 tells whether pre-training on \emph{retinal} images matters or whether the Vision Transformer architecture alone is responsible. M1 versus M2 tells whether domain-shift augmentation adds robustness. B1 versus M1 compares a conventional model with the project's main model. A linear probe (frozen encoder with a trainable linear head), which would measure the quality of the frozen representations alone, was considered but dropped because of the limited time; all four models are fully fine-tuned.
 
 \subsection{Masked Autoencoders and RETFound}
 \label{subsec:mae}
@@ -118,10 +119,9 @@ where $\eta_{\text{base}}$ is the learning rate of the head and $\gamma\in(0,1)$
     \end{cases}
     \label{eq:cosine}
 \end{equation}
-where $t$ is the current optimisation step, $T$ the total number of steps, $T_w$ the warm-up steps (two epochs), $\eta_{\max}$ the peak rate and $\eta_{\min}=10^{-6}$ the final rate. Other settings are drop-path 0.2, gradient clipping at norm 1.0 and ImageNet mean/standard-deviation input normalisation, as in the official fine-tuning code. For ResNet-50 (B1) the same optimiser and schedule are used with a single learning rate and no LLRD.
+where $t$ is the current optimisation step, $T$ the total number of steps, $T_w$ the warm-up steps (one epoch), $\eta_{\max}$ the peak rate and $\eta_{\min}=10^{-6}$ the final rate. Other settings are drop-path 0.2, gradient clipping at norm 1.0 and ImageNet mean/standard-deviation input normalisation, as in the official fine-tuning code. For ResNet-50 (B1) the same optimiser and schedule are used with a single learning rate and no LLRD.
 
-\paragraph{Training length.} All models are trained from the pre-trained weights for \textbf{15 epochs} with the cosine schedule above (two warm-up epochs), so that the comparison uses an identical budget. The number was chosen as the largest that fitted the compute quota: a speed benchmark on Kaggle T4 GPUs measured about 36 training images per second for ViT-L at batch size 16 (peak memory 8.4\,GB) when one job uses the GPU alone, about 30 images per second when two jobs run in parallel, and about 192 images per second for ResNet-50. One ViT-L epoch (35{,}126 images plus the validation pass) therefore takes about 21 minutes and a 15-epoch ViT-L run about 5.3 hours; one Kaggle session may run at most 12 hours. A first pilot of 5 epochs gave low scores and did not show that training had saturated, so all models were retrained from scratch with the longer schedule; the pilot results are not reported.
-The measured wall-clock times of the final runs, including the final evaluation, were 356~minutes for M1, 328~minutes for B2, and 50 and 48~minutes for the two seeds of B1.
+\paragraph{Training length.} All four models are trained for \textbf{5 epochs} with the cosine schedule above, so that the comparison uses an identical budget. The budget was set by compute: a speed benchmark on Kaggle T4 GPUs measured about 36 training images per second for ViT-L at batch size 16 (peak memory 8.4\,GB) and about 192 images per second for ResNet-50, and one Kaggle session may run at most 12 hours on two GPUs. In practice one ViT-L run of 5 epochs took about 107--114 minutes (two runs in parallel, one per GPU, including the final evaluation on both test sets) and one ResNet-50 run about 16 minutes. The validation QWK was still rising at epoch 5 for all models (Section~\ref{subsec:training_dynamics}). The models B1, B2 and M1 were therefore also retrained from scratch for 15 epochs with two warm-up epochs; this repetition is reported in Section~\ref{subsec:budget_check}.
 
 \subsection{Class Imbalance and Loss Function}
 \label{subsec:loss}
@@ -138,10 +138,19 @@ where $n_{y_i}$ is the number of training images in the class $y_i$ of image $i$
 \end{equation}
 where $K=5$ is the number of grades, $p_k$ the predicted probability of grade $k$, $y$ the annotated grade, $\mathbb{1}[\cdot]$ the indicator function and $\varepsilon=0.1$ the smoothing factor. Label smoothing is useful here because EyePACS labels are noisy: it prevents the model from becoming over-confident in labels that may be wrong.
 
-\subsection{Data Augmentation}
-\label{subsec:augmentation}
+\subsection{Domain-Shift Augmentation for M2}
+\label{subsec:dg_aug}
 
-All models use the same standard augmentation, applied only to the training images: random resized crop (scale 0.6--1), horizontal flip, rotation up to $20^\circ$ and light brightness/contrast jitter. The validation and test images are only normalised. No augmentation that imitates differences between cameras (colour casts, gamma, blur, JPEG compression), such as the FundusAug module of GDRNet \cite{gdrnet2023}, is used: such a model (M2) was part of the original plan, but the GPU budget allowed only two ViT-L runs in parallel, and the comparison of retinal and ImageNet pre-training (B2 versus M1) was given priority. Section~\ref{sec:future_improvements} lists it as future work.
+All models use standard augmentation: random resized crop (scale 0.6--1), horizontal flip, rotation up to $20^\circ$ and light brightness/contrast jitter. Model M2 adds augmentation that imitates differences between cameras and sites, following the idea of FundusAug in GDRNet \cite{gdrnet2023}: stronger colour jitter, random per-channel gain (0.7--1.3) to produce colour casts, random gamma (0.7--1.5), Gaussian blur, JPEG re-compression with quality 30--90, additive noise and random erasing. Each operation is applied with its own probability. The ranges are generic and fixed in advance; they are \emph{not} tuned on DDR. Figure~\ref{fig:augmentation} shows the same eight EyePACS training images unchanged, under the standard augmentation used by B1, B2 and M1, and under the domain-shift augmentation used by M2.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/t03_augmentation.jpg}
+    \caption{EyePACS training images: original (top), standard augmentation (middle), domain-shift augmentation of M2 (bottom).}
+    \label{fig:augmentation}
+\end{figure}
+
+The middle row only changes geometry (crop, flip, rotation), whereas the bottom row also produces colour casts (purple, green, red), darker or washed-out images, blur and noise. These are the kinds of appearance differences between cameras that M2 is expected to become invariant to.
 
 \subsection{Evaluation Metrics}
 \label{subsec:metrics}
@@ -158,7 +167,7 @@ The secondary metrics are \textbf{macro-F1} (the unweighted mean of the five per
     \Delta\text{QWK} = \kappa_{\text{EyePACS-test}} - \kappa_{\text{DDR-test}},
     \label{eq:delta}
 \end{equation}
-where a smaller $\Delta\text{QWK}$ means that the model loses less when the imaging domain changes (a value near zero or below zero means that no loss is observed). Every metric on the test sets is accompanied by a 95\% \emph{bootstrap} confidence interval \cite{efron1993}: the test set is resampled with replacement 1{,}000 times, the metric is recomputed on each resample, and the 2.5th and 97.5th percentiles are reported. Differences between two models are tested with a paired bootstrap on the same resamples, and a model is called better only if the intervals do not overlap substantially. For B1, which was trained with two seeds, the mean and standard deviation over seeds are reported in addition.
+where a smaller $\Delta\text{QWK}$ means that the model loses less when the imaging domain changes (a value near zero or below zero means that no loss is observed). Every metric on the test sets is accompanied by a 95\% \emph{bootstrap} confidence interval \cite{efron1993}: the test set is resampled with replacement 1{,}000 times, the metric is recomputed on each resample, and the 2.5th and 97.5th percentiles are reported. Differences between two models are tested with a paired bootstrap on the same resamples, and a model is called better only if the intervals do not overlap substantially. For B1, which was trained with three seeds, the mean and standard deviation over seeds are reported in addition.
 
 Two supplementary analyses were added after the first results showed that raw QWK values of the two datasets are hard to compare. They do not replace the primary protocol above. (i) \emph{Prior-matched $\Delta$QWK}: because QWK depends on the grade mix (EyePACS has 74\% grade~0, DDR 50\%), the EyePACS-test images are resampled, stratified by grade, to the grade proportions of DDR-test before $\kappa_{\text{EyePACS-test}}$ is computed, and Equation~\eqref{eq:delta} is evaluated on this matched set. (ii) \emph{Ordinal decoding}: instead of the arg-max, the predicted grade is the expected grade $\sum_k k\,p_k$ cut by four thresholds that are fitted to maximise QWK on EyePACS-validation only. DDR is never used to fit anything in either analysis.
 
@@ -178,7 +187,7 @@ All training runs on Kaggle notebooks with NVIDIA Tesla T4 GPUs (16\,GB). Kaggle
 \subsection{End-to-End Pipeline}
 \label{subsec:pipeline}
 
-Figure~\ref{fig:pipeline} summarises the workflow. Raw images from EyePACS and DDR are preprocessed in the same way (step~2), the three models are trained on EyePACS-train only (step~3), the checkpoint of each run is selected by the validation QWK on EyePACS-validation (step~4) and then frozen. Only after that are the two test sets evaluated, once (step~5), followed by metrics and diagnostic analysis (step~6) and the demo and report (step~7). The green box of step~4 is the key control of the study: no information from DDR flows into any decision before step~5.
+Figure~\ref{fig:pipeline} summarises the workflow. Raw images from EyePACS and DDR are preprocessed in the same way (step~2), the four models are trained on EyePACS-train only (step~3), the checkpoint of each run is selected by the validation QWK on EyePACS-validation (step~4) and then frozen. Only after that are the two test sets evaluated, once (step~5), followed by metrics and diagnostic analysis (step~6) and the demo and report (step~7). The green box of step~4 is the key control of the study: no information from DDR flows into any decision before step~5.
 
 \begin{figure}[htbp]
     \centering
@@ -211,19 +220,20 @@ Table~\ref{tab:data_roles} lists, for every split, the activities in which it ma
 \subsection{Experiment Matrix}
 \label{subsec:experiment_matrix}
 
-Table~\ref{tab:experiments} lists the runs. The compute quota allows one Kaggle session with two GPUs at a time, and a ViT-L run of 15 epochs occupies one GPU for more than five hours. B2 and M1 therefore run in parallel with one seed (seed 0) each, and the inexpensive ResNet-50 baseline B1 runs afterwards on each GPU with two seeds (0 and 1). A third ViT-L model (M2, with domain-shift augmentation) and the linear-probe experiments of the original plan were dropped for the same reason. Consequently the seed-to-seed spread can be reported only for B1; differences between M1 and B2 are judged with the paired bootstrap on the test images (Section~\ref{subsec:metrics}), which measures test-set sampling noise but not training-seed noise. This limitation is stated again in Section~\ref{subsec:limitations}.
+Table~\ref{tab:experiments} lists the runs that were actually trained. Because the whole project had to fit into one night of GPU time, the matrix was shortened after the speed benchmark: ResNet-50 is cheap (16 minutes) and receives three seeds, while each ViT-L run costs almost two hours, so B2, M1 and M2 receive one seed (seed 0). The linear-probe experiments of the original plan were dropped for the same reason. Consequently the seed-to-seed spread can be reported only for B1; differences between the ViT-L models are judged with the paired bootstrap on the test images (Section~\ref{subsec:metrics}), which measures test-set sampling noise but not training-seed noise. This limitation is stated again in Section~\ref{subsec:limitations}.
 
 \begin{table}[htbp]
     \centering
-    \caption{Experiment matrix (all runs: 15 epochs, trained from the pre-trained weights).}
+    \caption{Experiment matrix (runs actually trained). ``(15)'' marks the 15-epoch repetition of Section~\ref{subsec:budget_check}, which used seeds 0 and 1 for B1.}
     \label{tab:experiments}
-    \begin{tabularx}{\textwidth}{l p{4.2cm} c X}
+    \begin{tabularx}{\textwidth}{l p{4.6cm} c c X}
         \toprule
-        \textbf{ID} & \textbf{Training mode} & \textbf{Seeds} & \textbf{Purpose} \\
+        \textbf{ID} & \textbf{Training mode} & \textbf{Epochs} & \textbf{Seeds} & \textbf{Purpose} \\
         \midrule
-        B1 & Full fine-tuning, ResNet-50 & 0, 1 & Conventional baseline \\
-        B2 & Full fine-tuning, ViT-L (ImageNet MAE) & 0 & Same architecture as M1, no retinal pre-training \\
-        M1 & Full fine-tuning, ViT-L (RETFound) & 0 & Main model \\
+        B1 & Full fine-tuning & 5 (15) & 0, 1, 2 & Conventional baseline \\
+        B2 & Full fine-tuning & 5 (15) & 0 & Same architecture as M1, no retinal pre-training \\
+        M1 & Full fine-tuning & 5 (15) & 0 & Main model \\
+        M2 & Full fine-tuning + domain-shift augmentation & 5 & 0 & Effect of domain-shift augmentation \\
         \bottomrule
     \end{tabularx}
 \end{table}

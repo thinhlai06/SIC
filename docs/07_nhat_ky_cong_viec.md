@@ -198,3 +198,8 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 - H1 không được ủng hộ (M1 − B2 = −0.031, KTC 95% [−0.051, −0.009]); H2 không phân biệt được. Mục tiêu 0.85 KHÔNG đạt. Huấn luyện dài hơn không giúp: val QWK tốt nhất ở epoch 5–6 (M1, B1) và 11 (B2).
 - Demo dùng checkpoint B2 (val QWK cao nhất, không chọn theo test).
 - Đã viết mục 3.3, 3.4, 3.5.4, phát hiện chính chương 4; PDF 51 trang, không còn ghi chú PENDING.
+
+## 25/11 15:50 - Quay lai ban 5 epoch lam chinh (nguoi dung chon phuong an B)
+- Them muc 3.3.8 so sanh voi lan train lai 15 epoch (ca hai ket qua deu cong bo). Ban 15 epoch day du: git tag report-15ep.
+- Chen anh thanh vien, dien chuong 5 (Role, Tasks; Self-review va Peer comment de trong). PDF 52 trang.
+- Anh ca nhan va main.pdf (co anh) KHONG day len GitHub vi repo cong khai.

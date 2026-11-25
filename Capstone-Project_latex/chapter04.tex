@@ -10,31 +10,23 @@
 The project delivered a complete, reproducible experiment on the robustness of diabetic retinopathy grading across fundus datasets:
 \begin{itemize}[leftmargin=1.5em]
     \item a preprocessing pipeline that converted about 92{,}000 EyePACS and DDR photographs into a common $224\times224$ format, with quality checks, a verified absence of duplicates between the two datasets, and a strict separation of data roles in which DDR is used only once, for the final test;
-    \item a training library with the RETFound fine-tuning recipe (layer-wise learning-rate decay, label smoothing, square-root balanced sampling, mixed precision) that runs the comparison on free Kaggle T4 GPUs, with one independent job per GPU;
-    \item a controlled comparison of three models (B1 ResNet-50, B2 ViT-L with ImageNet MAE weights, M1 RETFound) with QWK as the primary metric, bootstrap confidence intervals, a prior-matched in-domain versus out-of-domain comparison and an ordinal-decoding variant;
+    \item a training library with the RETFound fine-tuning recipe (layer-wise learning-rate decay, label smoothing, square-root balanced sampling, mixed precision) that runs the whole comparison on free Kaggle T4 GPUs, with one independent job per GPU;
+    \item a controlled comparison of four models (B1 ResNet-50, B2 ViT-L with ImageNet MAE weights, M1 RETFound, M2 RETFound with domain-shift augmentation) with QWK as the primary metric, bootstrap confidence intervals, a prior-matched in-domain versus out-of-domain comparison and an ordinal-decoding variant;
     \item diagnostic analyses (confusion matrices, per-grade recall, ROC for referable DR, error structure, Grad-CAM and t-SNE) and a working English web demo that grades an uploaded fundus photograph and shows the probabilities and a Grad-CAM overlay.
 \end{itemize}
 
 \subsection{Main Findings}
 \label{subsec:main_findings}
 
-The measured results (Section~\ref{sec:modeling}) can be summarised as follows.
-\begin{itemize}[leftmargin=1.5em]
-    \item On the unseen DDR test set the QWK with the arg-max rule is 0.713 for B2, 0.682 for M1 and 0.669 for B1; in-domain it is 0.686, 0.670 and 0.672. Ordinal decoding fitted on EyePACS-validation raises the DDR values to 0.734, 0.707 and 0.709. The level of 0.85 that the team had hoped to reach was not attained.
-    \item H1 is not supported: on DDR the RETFound model scored \emph{lower} than the ImageNet-pre-trained ViT-L (difference $-0.031$, 95\% interval [$-0.051$, $-0.009$], single seed each).
-    \item H2 cannot be decided: the in-to-out difference of M1 is not distinguishable from that of ResNet-50, and none of the three models lost a measurable amount of QWK on DDR.
-    \item Mild disease is hardly recognised (grade-1 recall 0.06--0.11), and with the arg-max rule about 29--33\% of referable eyes would be missed (seed-0 runs), although the referable-DR AUC is 0.87--0.90.
-    \item The M1 features separate the two datasets far more clearly than those of B1 and B2, so retinal pre-training did not produce a domain-invariant representation here.
-    \item Longer training did not help beyond a point: the best validation QWK was reached at epoch~5 or~6 by M1 and B1 and at epoch~11 by B2.
-\end{itemize}
-These findings are bound to this recipe, input size and source--target pair; they do not show that RETFound is weaker in general.
+On the unseen DDR dataset all four models reach a QWK between 0.69 and 0.73 with the arg-max rule (0.73--0.75 with the ordinal rule fitted on EyePACS-validation), and an AUC of 0.88--0.91 for referable DR. Contrary to the initial hypotheses, the RETFound model fine-tuned with the same recipe (M1) was \emph{not} better than the ImageNet-MAE model (B2) on DDR, and its feature space separates the two datasets more strongly than that of the ImageNet models. Retinal pre-training did give M1 a higher in-domain score than B2 and a better recall of severe disease, and its errors are mostly over-gradings rather than missed disease. The domain-shift augmentation (M2) raised the DDR score of the ViT-L model by 0.043 QWK relative to M1, but lowered the in-domain score. The in-domain to out-of-domain difference is small for all models once the different grade mix of the two datasets is taken into account, which shows that comparing raw QWK values across datasets can be misleading. These are honest, partly negative results; they are valuable because they show under which conditions a foundation model does \emph{not} automatically solve dataset shift.
+A repetition of B1, B2 and M1 with 15 epochs did not improve the DDR scores (0.669, 0.713 and 0.682) and reproduced the difference of 0.031 between B2 and M1 (Section~\ref{subsec:budget_check}). The QWK of 0.85 that the team had hoped for was not reached.
 
 \subsection{Benefits}
 \label{subsec:benefits}
 
 \begin{itemize}[leftmargin=1.5em]
-    \item \textbf{For screening practice.} An automated assistant trained on one public dataset and evaluated on a dataset collected in another country shows how far such a tool can support primary-care screening where ophthalmologists are scarce. The demo shows how a tool could present its result with probabilities and a visual explanation.
-    \item \textbf{For model selection.} The study gives practitioners a concrete warning: pre-training on data from the same medical domain did not guarantee a better score here, so candidate models should be compared under one recipe on the user's own data, and every deployment needs a local test set.
+    \item \textbf{For screening practice.} The referable-DR AUC of about 0.9 on a dataset collected in another country shows that an automated assistant trained on EyePACS can in principle support primary-care screening where ophthalmologists are scarce. The demo shows how such a tool could present its result with probabilities and a visual explanation.
+    \item \textbf{For model selection.} The study gives practitioners a concrete warning: a better in-domain score or a larger pre-training set does not guarantee a better score on a new device or population, and every deployment needs a local test set.
     \item \textbf{For students and future teams.} The scripts, logs and figures form a reproducible template for dataset-shift studies under a small compute budget (free GPUs only), including a leakage-controlled data protocol and a bootstrap-based way to judge differences.
 \end{itemize}
 
@@ -44,17 +36,16 @@ These findings are bound to this recipe, input size and source--target pair; the
 \subsection{Limitations of This Study}
 \label{subsec:limits_summary}
 
-The limitations in Section~\ref{subsec:limitations} bound the conclusions: only one source and one target dataset, a single training seed for the ViT-L models, a training budget of 15 epochs, an input resolution of 224 pixels, and no domain-generalization method. The interval widths in this report measure only the sampling noise of the test set.
+The limitations in Section~\ref{subsec:limitations} bound the conclusions: only one source and one target dataset, a single training seed for the ViT-L models, a limited training schedule, an input resolution of 224 pixels, and domain generalization limited to augmentation. The first three mean that small differences, such as those between B1, B2 and M1 on DDR, could change with other seeds or another training recipe; the interval widths in this report measure only the sampling noise of the test set.
 
 \subsection{Roadmap}
 \label{subsec:roadmap}
 
 \begin{enumerate}[leftmargin=1.5em]
-    \item \textbf{Higher resolution.} Training at 448 or 512 pixels, with the position embeddings interpolated, should improve the recognition of mild disease (grade~1); this needs more GPU memory and time than the free quota allowed.
-    \item \textbf{More seeds and a revised recipe.} Three or more seeds per ViT-L model would turn the single-run comparisons into statistically solid ones. Because longer training alone did not raise the validation QWK here, the next experiments should change the recipe (regularisation, augmentation, loss function, closeness to the official RETFound settings) before the number of epochs, and judge each change on EyePACS-validation only.
-    \item \textbf{Domain-shift augmentation.} A fourth model, RETFound with augmentation that imitates camera differences (colour casts, gamma, blur, compression, as in GDRNet), was planned but could not be trained within the quota; it would show whether augmentation adds robustness on top of retinal pre-training.
+    \item \textbf{Higher resolution.} Training at 448 or 512 pixels, with the position embeddings interpolated, should improve the recognition of mild disease (grade~1), the weakest class of all models; this needs more GPU memory and time than the free quota allowed.
+    \item \textbf{More seeds and a revised recipe.} Three or more seeds per ViT-L model would turn the single-run comparisons into statistically solid ones. Because 15 epochs did not improve on 5 epochs here, the next experiments should first change the recipe (regularisation, augmentation, loss function) and judge each change on EyePACS-validation only.
     \item \textbf{More domains.} Adding more source datasets (for example Messidor-2 or APTOS) and more target datasets would show whether the findings hold beyond EyePACS $\rightarrow$ DDR and enable leave-one-domain-out evaluation.
-    \item \textbf{Methods that target the domain gap directly.} Examples are test-time adaptation of the normalisation statistics, continued self-supervised pre-training on unlabelled target-domain photographs, and training objectives that encourage domain-invariant features.
+    \item \textbf{Methods that target the domain gap directly.} Examples are test-time adaptation of the normalisation statistics, continued self-supervised pre-training on unlabelled target-domain photographs, and training objectives that encourage domain-invariant features; the t-SNE result suggests that RETFound features carry a strong domain signal that such methods could reduce.
     \item \textbf{Ordinal and calibrated outputs.} Training with an ordinal loss and calibrating the probabilities would use the grade order during training, not only at decoding, and would make the referral recommendation of the demo more reliable.
     \item \textbf{Clinical validation.} Any real use requires prospective validation with ophthalmologists, a study of fairness across devices and populations, and regulatory review; the present demo is a research prototype only.
 \end{enumerate}

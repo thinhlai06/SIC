@@ -6,20 +6,9 @@
 % ------------------------------------------------------------------------------
 \begin{figure}[htbp]
     \centering
-    \setlength{\fboxrule}{1pt}%
-    \setlength{\fboxsep}{20pt}%
-    \fcolorbox{SamsungGray}{white}{%
-        \parbox{0.88\textwidth}{%
-            \centering\vspace{1.5cm}
-            \sffamily\fontsize{13pt}{16pt}\selectfont\color{SamsungGray}
-            \textbf{< ATTACH A TEAM PICTURE HERE >}\par
-            \vspace{0.4cm}
-            \footnotesize\color{gray}
-            Replace this placeholder with: \texttt{\textbackslash includegraphics[width=0.85\textbackslash textwidth]\{figures/team\_photo.png\}}\par
-            \vspace{1.5cm}
-        }%
-    }
-    \caption{Capstone Project Team Photograph}
+    \includegraphics[height=7cm]{figures/team_member_1.jpg}\hspace{0.8cm}%
+    \includegraphics[height=7cm]{figures/team_member_2.jpg}
+    \caption{Capstone Project Team Photograph (the two members of \teamName)}
     \label{fig:team_photo}
 \end{figure}
 
@@ -34,7 +23,7 @@
     \centering
     \caption{Individual Team Member Reviews and Comments}
     \label{tab:team_member_comments}
-    \renewcommand{\arraystretch}{2.0}
+    \renewcommand{\arraystretch}{1.35}
     \arrayrulecolor{SamsungGray}
     \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\sffamily}p{3.2cm}|>{\raggedright\arraybackslash}X|}
         \hline
@@ -42,9 +31,15 @@
         \multicolumn{1}{|c|}{\sffamily\bfseries\color{SamsungDarkGray}NAME} & 
         \multicolumn{1}{c|}{\sffamily\bfseries\color{SamsungDarkGray}REVIEW and COMMENT} \\
         \hline
-        \textbf{\memberOne} & \vspace{0.5cm} \\
+        \textbf{\memberOne} & \textbf{Role:} Model design and training.\newline
+        \textbf{Tasks:} Baselines B1 and B2, RETFound fine-tuning (M1 and M2), training scripts and GPU-budget planning on Kaggle, Grad-CAM and t-SNE analysis, report writing and review.\newline
+        \textbf{Self-review:}\newline\mbox{}\newline
+        \textbf{Peer comment:}\newline\mbox{} \\
         \hline
-        \textbf{\memberTwo} & \vspace{0.5cm} \\
+        \textbf{\memberTwo} & \textbf{Role:} Data and evaluation.\newline
+        \textbf{Tasks:} Dataset acquisition and verification, preprocessing, exploratory data analysis, metrics and bootstrap confidence intervals, testing, the Gradio web demo, report writing and review.\newline
+        \textbf{Self-review:}\newline\mbox{}\newline
+        \textbf{Peer comment:}\newline\mbox{} \\
         \hline
     \end{tabularx}
 \end{table}
