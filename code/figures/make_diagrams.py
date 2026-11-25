@@ -55,8 +55,8 @@ def g01():
                                               "DDR: test only, 3,759", "(ungradable removed)"], fs=9.5)
     box(ax, 3.6, 3.7, 2.9, 1.9, "2. Preprocessing", ["crop black border", "pad to square → 224×224",
                                                    "JPEG cache · duplicate check", "dHash + NCC (EyePACS ↔ DDR)"], fs=9.5)
-    box(ax, 7.2, 3.7, 2.7, 1.9, "3. Training", ["EyePACS-train only", "B1 · B2 · M1 · M2", "5 epochs · B1: 3 seeds",
-                                              "B2, M1, M2: 1 seed"], fs=9.5)
+    box(ax, 7.2, 3.7, 2.7, 1.9, "3. Training", ["EyePACS-train only", "B1 · B2 · M1", "15 epochs · B1: 2 seeds",
+                                              "B2, M1: 1 seed"], fs=9.5)
     box(ax, 10.3, 3.7, 2.5, 1.9, "4. Model selection", ["best epoch by QWK", "on EyePACS-val", "DDR never used", "→ frozen checkpoint"],
         fc=GREEN, ec="#2E7D32", fs=9.5)
     for a, b in [(2.9, 3.6), (6.5, 7.2), (9.9, 10.3)]:
@@ -88,7 +88,7 @@ def g02():
     box(ax, 0.3, 0.5, 2.6, 1.5, "RETFound weights", ["natureCFP, private", "Kaggle dataset"], fs=9.5, fc=ORANGE, ec="#E65100")
     box(ax, 3.6, 4.5, 2.4, 1.5, "Preprocess kernel", ["CPU · crop, resize,", "cache, dHash"], fs=9.5)
     box(ax, 6.3, 4.5, 2.5, 1.5, "Package kernel", ["CPU · QA + tar files", "(few large files)"], fs=9.5)
-    box(ax, 3.6, 2.2, 5.2, 1.9, "Training kernel (GPU, 2 × T4)", ["one independent job per GPU · B1 · B2 · M1 · M2", "logs (CSV/JSON) + curves + best checkpoint", "final evaluation: logits + features on both test sets"], fc=GREEN, ec="#2E7D32", fs=9.5)
+    box(ax, 3.6, 2.2, 5.2, 1.9, "Training kernel (GPU, 2 × T4)", ["one independent job per GPU · B1 · B2 · M1", "logs (CSV/JSON) + curves + best checkpoint", "final evaluation: logits + features on both test sets"], fc=GREEN, ec="#2E7D32", fs=9.5)
     box(ax, 3.6, 0.5, 5.2, 1.3, "Saved outputs", ["best.pt · val logits · *_test.npz (per run)"], fs=9.5)
     box(ax, 9.5, 4.3, 3.2, 1.7, "Analysis (local CPU)", ["bootstrap · ΔQWK · Grad-CAM · t-SNE", "evidence_figures/", "(outputs via Kaggle CLI)"], fs=9.5)
     box(ax, 9.5, 2.4, 3.2, 1.6, "Gradio demo", ["CPU inference", "grade · probabilities · Grad-CAM"], fc=ORANGE, ec="#E65100", fs=9.5)
@@ -119,8 +119,8 @@ def g03():
     box(ax, 10.8, 3.5, 2.0, 1.7, "Reconstruction", ["loss on masked", "patches (MSE)"], fs=9.5)
     for a, b in [(2.2, 2.7), (4.7, 5.2), (7.6, 8.1), (10.3, 10.8)]:
         arrow(ax, (a, 4.35), (b, 4.35))
-    ax.text(0.2, 2.6, "Stage B – supervised fine-tuning on EyePACS-train (our work: M1 / M2; B2 uses ImageNet MAE weights)", fontsize=10.5, color=BLUE, fontweight="bold")
-    box(ax, 0.2, 0.5, 2.4, 1.8, "Fundus image", ["standard aug. (M1)", "+ domain-shift aug. (M2)"], fs=9.5)
+    ax.text(0.2, 2.6, "Stage B – supervised fine-tuning on EyePACS-train (our work: M1; B2 uses ImageNet MAE weights)", fontsize=10.5, color=BLUE, fontweight="bold")
+    box(ax, 0.2, 0.5, 2.4, 1.8, "Fundus image", ["standard augmentation", "(crop, flip, rotation, jitter)"], fs=9.5)
     box(ax, 3.3, 0.5, 3.0, 1.8, "ViT-L encoder", ["initialised from Stage A", "all patches, layer-wise LR decay"], fc=GREEN, ec="#2E7D32", fs=9.5)
     box(ax, 7.0, 0.5, 2.4, 1.8, "Global pooling", ["average of", "patch tokens"], fs=9.5)
     box(ax, 10.0, 0.5, 2.8, 1.8, "Linear head", ["5 outputs:", "DR grade 0–4"], fc=ORANGE, ec="#E65100", fs=9.5)

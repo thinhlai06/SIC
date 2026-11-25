@@ -57,7 +57,7 @@ Labelled fundus images are expensive, but unlabelled ones are abundant. \emph{Se
 \subsection{Motivation}
 \label{subsec:motivation}
 
-A DR grading tool is only useful if it works on the images of the clinic that deploys it, which usually differ from the clinic that produced the training data. Reporting accuracy on a held-out part of the training dataset hides this problem. Two ideas promise robustness: (i) representations learned by SSL on large and varied unlabelled retinal collections, and (ii) augmentation that imitates the differences between cameras and sites, as in the FundusAug module of GDRNet \cite{gdrnet2023}. Both are attractive, but their benefit in a strictly controlled \emph{train-on-one-dataset, test-on-another} protocol has to be measured and not assumed.
+A DR grading tool is only useful if it works on the images of the clinic that deploys it, which usually differ from the clinic that produced the training data. Reporting accuracy on a held-out part of the training dataset hides this problem. Two ideas promise robustness: (i) representations learned by SSL on large and varied unlabelled retinal collections, and (ii) augmentation that imitates the differences between cameras and sites, as in the FundusAug module of GDRNet \cite{gdrnet2023}. This project studies the first idea; the second is left for future work (Section~\ref{sec:future_improvements}). The benefit of SSL pre-training in a strictly controlled \emph{train-on-one-dataset, test-on-another} protocol has to be measured and not assumed.
 
 \subsection{Research Question and Hypotheses}
 \label{subsec:research_question}
@@ -65,15 +65,14 @@ A DR grading tool is only useful if it works on the images of the clinic that de
 The research question of the project is:
 
 \begin{quote}
-\emph{Do self-supervised pre-training on retinal images (RETFound) and domain-shift augmentation help a DR grading model keep its performance when it is trained on EyePACS and tested on the unseen DDR dataset, and by how much?}
+\emph{Does self-supervised pre-training on retinal images (RETFound) help a DR grading model keep its performance when it is trained on EyePACS and tested on the unseen DDR dataset, and by how much?}
 \end{quote}
 
-We formulate three hypotheses, each of which is testable with the controlled comparison of Section~\ref{sec:training_methodology}:
+We formulate two hypotheses, each of which is testable with the controlled comparison of Section~\ref{sec:training_methodology}:
 
 \begin{enumerate}[leftmargin=1.8em]
     \item[H1.] A ViT-L initialised with retina-specific SSL weights (M1) reaches a higher QWK on DDR than the same architecture initialised with ImageNet MAE weights (B2).
     \item[H2.] The drop in performance from in-domain (EyePACS-test) to out-of-domain (DDR-test) is smaller for M1 than for the conventional ResNet-50 baseline (B1).
-    \item[H3.] Adding domain-shift augmentation (M2) reduces this drop further compared with M1.
 \end{enumerate}
 
 A negative outcome for any hypothesis is a legitimate result and is reported as such.
@@ -85,7 +84,7 @@ The measurable objectives are:
 
 \begin{enumerate}[leftmargin=1.8em]
     \item Build a reproducible pipeline that trains only on EyePACS and evaluates on EyePACS-test (in-domain) and DDR-test (out-of-domain), with every choice (checkpoint, hyper-parameters, augmentation strength) made on EyePACS-validation only.
-    \item Train and compare four models: B1 (ResNet-50, ImageNet), B2 (ViT-L, ImageNet MAE), M1 (RETFound) and M2 (RETFound with domain-shift augmentation), using three random seeds for the inexpensive ResNet-50 baseline and one seed for the ViT-L models because of the GPU budget.
+    \item Train and compare three models for 15 epochs each: B1 (ResNet-50, ImageNet), B2 (ViT-L, ImageNet MAE) and M1 (RETFound), using two random seeds for the inexpensive ResNet-50 baseline and one seed for the ViT-L models because of the GPU budget.
     \item Report quadratic weighted kappa (primary), macro-F1, per-grade recall, referable-DR AUC and the in-to-out drop $\Delta$QWK, each with bootstrap 95\% confidence intervals.
     \item Explain the results with Grad-CAM and t-SNE, and deliver a local web demo for grading a single fundus image.
 \end{enumerate}
@@ -93,7 +92,7 @@ The measurable objectives are:
 \subsection{Scope and Constraints}
 \label{subsec:scope}
 
-The project deliberately uses \emph{only two datasets}: EyePACS as the source domain and the DDR test split as the target domain. The SSL stage itself is not repeated by the team; the RETFound weights released by its authors are used and the team's contribution is the controlled comparison and the robustness analysis. Domain generalization is limited to data augmentation, because only one labelled source domain is available. All training runs on free Kaggle GPUs (NVIDIA T4) within a budget of about 30 GPU hours, which is why the input resolution is fixed at $224\times224$ pixels.
+The project deliberately uses \emph{only two datasets}: EyePACS as the source domain and the DDR test split as the target domain. The SSL stage itself is not repeated by the team; the RETFound weights released by its authors are used and the team's contribution is the controlled comparison and the robustness analysis. No domain-generalization algorithm (augmentation, domain-invariant learning) is applied; the study measures how robust the representations of the pre-trained models are, because only one labelled source domain is available. All training runs on free Kaggle GPUs (NVIDIA T4) within a budget of about 30 GPU hours, which is why the input resolution is fixed at $224\times224$ pixels.
 
 \section{Members and Role Assignments}
 \label{sec:members_roles}
@@ -108,7 +107,7 @@ The team ("Group~3") has two members. Both members take part in writing the repo
         \toprule
         \textbf{No.} & \textbf{Member Name} & \textbf{Assigned Roles and Responsibilities} \\
         \midrule
-        1 & \memberOne   & Model design and training: baselines B1/B2, RETFound fine-tuning (M1), domain-shift augmentation (M2), training scripts and GPU-budget planning on Kaggle, Grad-CAM and t-SNE analysis \\
+        1 & \memberOne   & Model design and training: baselines B1/B2, RETFound fine-tuning (M1), training scripts and GPU-budget planning on Kaggle, Grad-CAM and t-SNE analysis \\
         2 & \memberTwo   & Data and evaluation: dataset acquisition and verification, preprocessing, exploratory data analysis, metrics and bootstrap confidence intervals, testing, and the Gradio web demo \\
         \bottomrule
     \end{tabularx}

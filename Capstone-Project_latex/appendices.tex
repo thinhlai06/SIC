@@ -70,14 +70,14 @@ Table~\ref{tab:hyperparameters} lists the settings of the fine-tuning recipe of 
         Optimizer               & AdamW                   & $\beta_1 = 0.9$, $\beta_2 = 0.999$, weight decay 0.05 (not applied to biases and 1-D parameters) \\
         Base learning rate rule & $5\times10^{-3}\times B_{\text{eff}}/256$ & Linear scaling rule of the official RETFound fine-tuning code \\
         Layer-wise LR decay     & 0.65                    & Equation~\eqref{eq:llrd}, 24 transformer blocks \\
-        Schedule                & Warm-up + cosine        & 1 warm-up epoch, final rate $10^{-6}$ (Equation~\eqref{eq:cosine}) \\
+        Schedule                & Warm-up + cosine        & 2 warm-up epochs, final rate $10^{-6}$ (Equation~\eqref{eq:cosine}) \\
         Physical / effective batch & 16 / 32              & Gradient accumulation of 2 steps \\
-        Epochs                  & 5 & Best epoch chosen by EyePACS-validation QWK \\
+        Epochs                  & 15                      & Best epoch chosen by EyePACS-validation QWK \\
         Loss                    & Cross-entropy           & Label smoothing 0.1 (Equation~\eqref{eq:ce}) \\
         Sampler                 & Square-root balanced    & Equation~\eqref{eq:sampler} \\
         Drop-path / grad. clip  & 0.2 / 1.0               & Regularisation and stability \\
         Precision               & AMP (fp16)              & Mixed precision on Tesla T4 \\
-        Seeds                   & 0, 1, 2                 & B1; seed 0 only for B2, M1, M2 \\
+        Seeds                   & 0, 1                    & B1 (two seeds); seed 0 only for B2 and M1 \\
         \bottomrule
     \end{tabularx}
 \end{table}
