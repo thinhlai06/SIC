@@ -36,6 +36,7 @@ DEFAULTS = dict(
     max_steps=0, val_max=0,           # benchmark controls (0 = off)
     time_limit_min=0, grad_ckpt=False, aug_figure=False, save_ckpt=True,
     final_eval=False, gpu=None,
+    init_ckpt="",                     # continue training from a saved best.pt (state dict) instead of the pretrained weights
 )
 
 
@@ -177,6 +178,11 @@ def build_model(cfg):
             log("WARNING: no pretrained weights (random init)")
     else:
         raise ValueError(arch)
+    if cfg.get("init_ckpt"):
+        ip = resolve_path(cfg["init_ckpt"])
+        sd = torch.load(ip, map_location="cpu")
+        sd = {k: (v.float() if v.is_floating_point() else v) for k, v in sd.items()}
+        log("continue from checkpoint:", ip, m.load_state_dict(sd))
     if cfg["grad_ckpt"] and hasattr(m, "set_grad_checkpointing"):
         m.set_grad_checkpointing(True)
     return m

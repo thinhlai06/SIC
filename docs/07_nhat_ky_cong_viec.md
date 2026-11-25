@@ -179,3 +179,8 @@ Quy ước mỗi mục: **Làm gì** → **Mục đích** → **Vì sao làm v�
 - K3 (M1, B2 với 8 epoch) bị Kaggle hủy sau ~2,5 giờ (chưa chạm giới hạn 240 phút của script, không có lý do). Chỉ còn đường cong validation (B2 đến epoch 7, M1 đến epoch 6), không có kết quả test.
 - Quyết định: KHÔNG chạy lại (cần ~3 giờ, sát hạn nộp). Báo cáo mục 3.3.8 mô tả đúng sự việc, chỉ dùng đường cong validation (hình t02), không đưa vào bảng nào; thêm giới hạn "ngân sách huấn luyện" ở 3.5.5 và chương 4.
 - PDF: 52 trang tổng (bìa/mục lục/danh mục 9 trang; chương 1–6 ~37 trang; tài liệu tham khảo + phụ lục ~6 trang).
+
+## 25/11 07:05 — K5: huấn luyện tiếp 3 epoch từ checkpoint 5 epoch (trả lời lo ngại "điểm thấp")
+- Lý do: K3 bị hủy; chạy lại 8 epoch từ đầu (~3 h) không kịp. Phương án rẻ hơn: tiếp tục 3 epoch từ best.pt của M1, B2, B1 (seed 0), tổng 8 epoch hiệu dụng. Quy tắc cố định TRƯỚC khi xem kết quả: blr 2e-3 (ViT-L) / lr 4e-5 (ResNet-50), warm-up 0,25 epoch, cosine về 1e-6, aug chuẩn, seed 100, chọn checkpoint theo QWK EyePACS-val, không dùng DDR.
+- Code: thêm `init_ckpt` vào train_lib (đã test load trên CPU), jobs_k5.json, dataset `sic-dr-ckpt5` (3 checkpoint), kernel `sic-dr-run-k5` đẩy 07:07 (GPU0: M1; GPU1: B2 rồi B1).
+- Kế hoạch: xong dự kiến 08:30–08:45. Nếu chưa xong lúc 09:15 thì giữ nguyên báo cáo hiện tại (đã nhất quán). M2 không có bản tiếp tục (thiếu GPU).
